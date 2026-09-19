@@ -3,9 +3,10 @@
   const panel = document.getElementById("nav-panel");
   const overlay = document.getElementById("nav-overlay");
   const icon = document.getElementById("burger-icon");
+  const closeBtn = document.getElementById("nav-close");
   const video = document.getElementById("bg-video");
   const pauseBtn = document.getElementById("bg-pause");
-  const firstLink = panel?.querySelector("a");
+  const firstLink = panel?.querySelector(".nav-items a");
 
   let open = false;
   let playing = true;
@@ -35,6 +36,7 @@
 
   burger?.addEventListener("click", () => setOpen(!open));
   overlay?.addEventListener("click", () => setOpen(false));
+  closeBtn?.addEventListener("click", () => setOpen(false));
 
   panel?.querySelectorAll("a").forEach((a) => {
     a.addEventListener("click", () => setOpen(false));
@@ -44,22 +46,21 @@
     if (e.key === "Escape" && open) setOpen(false);
   });
 
-  // Mark active nav link
   const path = location.pathname.split("/").pop() || "index.html";
-  panel?.querySelectorAll("a").forEach((a) => {
+  const page =
+    path === "" || path === "/"
+      ? "index.html"
+      : path.includes("generator")
+        ? "generator.html"
+        : path.includes("about")
+          ? "about.html"
+          : path;
+
+  panel?.querySelectorAll(".nav-items a").forEach((a) => {
     const href = a.getAttribute("href") || "";
-    if (
-      href === path ||
-      (path === "" && href === "index.html") ||
-      (path === "index.html" && href === "index.html") ||
-      (path === "generator.html" && href === "generator.html") ||
-      (path === "about.html" && href === "about.html")
-    ) {
-      a.classList.add("is-active");
-    }
+    if (href === page) a.classList.add("is-active");
   });
 
-  // Video play / pause
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
   function applyMotion() {
