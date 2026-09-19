@@ -10,8 +10,7 @@ const genLeft = document.getElementById("gen-left");
 // Локально: http://127.0.0.1:3000/api/random
 // После деплоя на Render — замени на свой адрес вида
 // https://твой-сервис.onrender.com/api/random
-const API_URL = "/api/random";
-
+const API_URL = "https://farside-hkic.onrender.com/api/random";
 
 btn.addEventListener("click", async function () {
   btn.disabled = true;
