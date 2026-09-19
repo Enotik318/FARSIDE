@@ -7,17 +7,16 @@ dotenv.config();
 
 const app = express();
 const API_URL = "https://farside-hkic.onrender.com";
-
+const PORT = process.env.PORT || 5000; 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
-  console.error('❌ Нет ключей в .env — заполни SPOTIFY_CLIENT_ID и SPOTIFY_CLIENT_SECRET');
   process.exit(1);
 }
 
 app.use(cors());
-
+app.use(express.static('./'));
 const GENRES = fs
   .readFileSync('raw-genres.txt', 'utf-8')
   .split('\n')                            // режем на строки
