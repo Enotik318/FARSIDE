@@ -54,7 +54,9 @@
         ? "generator.html"
         : path.includes("about")
           ? "about.html"
-          : path;
+          : path.includes("settings")
+            ? "settings.html"
+            : path;
 
   panel?.querySelectorAll(".nav-items a").forEach((a) => {
     const href = a.getAttribute("href") || "";
