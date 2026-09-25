@@ -1,4 +1,20 @@
 (() => {
+  const THEME_KEY = "farside-theme";
+  function getTheme() {
+    return localStorage.getItem(THEME_KEY) || "dark";
+  }
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem(THEME_KEY, theme);
+    document.querySelectorAll("[data-theme-btn]").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.getAttribute("data-theme-btn") === theme);
+    });
+  }
+  applyTheme(getTheme());
+  document.querySelectorAll("[data-theme-btn]").forEach((btn) => {
+    btn.addEventListener("click", () => applyTheme(btn.getAttribute("data-theme-btn")));
+  });
+
   const burger = document.getElementById("burger");
   const panel = document.getElementById("nav-panel");
   const overlay = document.getElementById("nav-overlay");
@@ -18,11 +34,7 @@
     overlay?.classList.toggle("is-open", open);
     icon?.classList.toggle("is-open", open);
     burger?.setAttribute("aria-expanded", String(open));
-    burger?.setAttribute(
-      "aria-label",
-      open ? "Закрыть меню" : "Открыть меню",
-    );
-
+    burger?.setAttribute("aria-label", open ? "Закрыть меню" : "Открыть меню");
     if (open) {
       document.getElementById("content")?.setAttribute("inert", "");
       pauseBtn?.setAttribute("inert", "");
@@ -37,11 +49,9 @@
   burger?.addEventListener("click", () => setOpen(!open));
   overlay?.addEventListener("click", () => setOpen(false));
   closeBtn?.addEventListener("click", () => setOpen(false));
-
   panel?.querySelectorAll("a").forEach((a) => {
     a.addEventListener("click", () => setOpen(false));
   });
-
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && open) setOpen(false);
   });
@@ -58,7 +68,7 @@
             ? "settings.html"
             : path;
 
-  panel?.querySelectorAll(".nav-items a").forEach((a) => {
+  document.querySelectorAll(".topbar-links a, .nav-items a").forEach((a) => {
     const href = a.getAttribute("href") || "";
     if (href === page) a.classList.add("is-active");
   });
@@ -72,16 +82,13 @@
       playing = false;
       updatePauseIcon();
     } else {
-      video
-        .play()
-        .then(() => {
-          playing = true;
-          updatePauseIcon();
-        })
-        .catch(() => {
-          playing = false;
-          updatePauseIcon();
-        });
+      video.play().then(() => {
+        playing = true;
+        updatePauseIcon();
+      }).catch(() => {
+        playing = false;
+        updatePauseIcon();
+      });
     }
   }
 
