@@ -32,6 +32,17 @@
       "gen.btn": "Запустить генератор",
       "gen.placeholder": "Жанр появится здесь",
       "gen.cover": "Обложка плейлиста",
+      "gen.filters": "Настрой поиск",
+      "gen.fAll": "Все жанры",
+      "gen.fCalm": "Спокойное",
+      "gen.fFolk": "Народные",
+      "gen.fEnergy": "Энергия",
+      "gen.fDark": "Тёмное",
+      "gen.fLatin": "Латина",
+      "gen.fElec": "Электроника",
+      "gen.fRock": "Рок",
+      "gen.fHip": "Хип-хоп",
+      "gen.fPop": "Поп",
       "gen.worlds": "Миры",
       "gen.mars": "Марс",
       "gen.marsHint": "Видео-фон",
@@ -44,7 +55,7 @@
       "about.title1": "Алгоритм устал.",
       "about.title2": "Ты — нет.",
       "about.p1": "Рекомендации сужают вкус до коридора. FARSIDE делает наоборот: бросает в сторону, которую сам бы не выбрал.",
-      "about.p2": "В Spotify тысячи микро-жанров. Полный список — слева. Генератор вытащит один и покажет, куда идти дальше.",
+      "about.p2": "В Spotify тысячи микро-жанров. Полный список — справа. Генератор вытащит один и покажет, куда идти дальше.",
       "about.p3": "Горизонт уже здесь.",
       "about.cta": "К генератору",
       "set.kicker": "Система",
@@ -56,8 +67,8 @@
       "set.lang": "Язык",
       "set.langDesc": "Интерфейс сайта.",
       "set.note": "Тема, язык и фон сохраняются в браузере.",
-      "mars.title": "Фон · Марс",
-      "mars.lead": "Настрой видео Марса: затемнение, контраст, насыщенность, ч/б.",
+      "mars.title": "Фон",
+      "mars.lead": "Затемнение, контраст, насыщенность — для выбранной планеты.",
       "mars.bright": "Яркость",
       "mars.contrast": "Контраст",
       "mars.saturate": "Насыщенность",
@@ -65,6 +76,12 @@
       "mars.opacity": "Прозрачность видео",
       "mars.save": "Сохранить",
       "mars.reset": "Сбросить",
+      "mars.planets": "Планеты",
+      "mars.mars": "Марс",
+      "mars.luna": "Луна",
+      "mars.video": "Видео",
+      "about.playlist": "Плейлист автора",
+      "about.tg": "Жизнь Енотов",
     },
     en: {
       "nav.menu": "Menu",
@@ -95,6 +112,17 @@
       "gen.btn": "Run generator",
       "gen.placeholder": "Genre appears here",
       "gen.cover": "Playlist cover",
+      "gen.filters": "Tune search",
+      "gen.fAll": "All genres",
+      "gen.fCalm": "Calm",
+      "gen.fFolk": "Folk",
+      "gen.fEnergy": "Energy",
+      "gen.fDark": "Dark",
+      "gen.fLatin": "Latin",
+      "gen.fElec": "Electronic",
+      "gen.fRock": "Rock",
+      "gen.fHip": "Hip-hop",
+      "gen.fPop": "Pop",
       "gen.worlds": "Worlds",
       "gen.mars": "Mars",
       "gen.marsHint": "Video background",
@@ -107,7 +135,7 @@
       "about.title1": "The algorithm is tired.",
       "about.title2": "You’re not.",
       "about.p1": "Recommendations narrow taste into a corridor. FARSIDE does the opposite: throws you somewhere you wouldn’t pick yourself.",
-      "about.p2": "Spotify holds thousands of micro-genres. Full list on the left. The generator pulls one and shows where to go next.",
+      "about.p2": "Spotify holds thousands of micro-genres. Full list on the right. The generator pulls one and shows where to go next.",
       "about.p3": "The horizon is already here.",
       "about.cta": "To generator",
       "set.kicker": "System",
@@ -119,8 +147,8 @@
       "set.lang": "Language",
       "set.langDesc": "Site interface.",
       "set.note": "Theme, language and background are saved in the browser.",
-      "mars.title": "Background · Mars",
-      "mars.lead": "Tune the Mars video: brightness, contrast, saturation, B&W.",
+      "mars.title": "Background",
+      "mars.lead": "Brightness, contrast, saturation — for the selected planet.",
       "mars.bright": "Brightness",
       "mars.contrast": "Contrast",
       "mars.saturate": "Saturation",
@@ -128,6 +156,12 @@
       "mars.opacity": "Video opacity",
       "mars.save": "Save",
       "mars.reset": "Reset",
+      "mars.planets": "Planets",
+      "mars.mars": "Mars",
+      "mars.luna": "Moon",
+      "mars.video": "Video",
+      "about.playlist": "Author playlist",
+      "about.tg": "Raccoon Life",
     },
   };
 
@@ -162,12 +196,20 @@
   applyTheme(getTheme());
   applyLang(getLang());
 
-  // Mars video look from settings
-  (function applyMarsFilter() {
+  // Mars/Luna video from settings
+  (function applyMarsBoot() {
+    const SOURCES = { mars: "media/mainfon.mp4", luna: "media/fonLuna.mp4" };
     try {
       const raw = localStorage.getItem("farside-mars");
-      if (!raw) return;
-      const s = JSON.parse(raw);
+      const s = raw ? JSON.parse(raw) : {};
+      const source = s.source || "mars";
+      const src = SOURCES[source] || SOURCES.mars;
+      const video = document.getElementById("bg-video");
+      if (video) {
+        const sourceEl = video.querySelector("source");
+        if (sourceEl) sourceEl.src = src;
+        video.load();
+      }
       const b = ((s.brightness ?? 52) / 100).toFixed(2);
       const c = ((s.contrast ?? 115) / 100).toFixed(2);
       const sat = ((s.saturate ?? 0) / 100).toFixed(2);
@@ -176,13 +218,13 @@
       const f = `grayscale(${g}) saturate(${sat}) brightness(${b}) contrast(${c})`;
       document.documentElement.style.setProperty("--video-filter", f);
       document.documentElement.style.setProperty("--video-opacity", op);
-      const video = document.getElementById("bg-video");
       if (video) {
         video.style.filter = f;
         video.style.opacity = op;
       }
     } catch (_) {}
   })();
+
 
 
 
@@ -199,12 +241,10 @@
   const overlay = document.getElementById("nav-overlay");
   const icon = document.getElementById("burger-icon");
   const closeBtn = document.getElementById("nav-close");
-  const video = document.getElementById("bg-video");
-  const pauseBtn = document.getElementById("bg-pause");
+  
   const firstLink = panel?.querySelector(".nav-items a");
 
   let open = false;
-  let playing = true;
 
   function setOpen(next) {
     open = next;
@@ -216,11 +256,9 @@
     burger?.setAttribute("aria-label", open ? "Закрыть меню" : "Открыть меню");
     if (open) {
       document.getElementById("content")?.setAttribute("inert", "");
-      pauseBtn?.setAttribute("inert", "");
       setTimeout(() => firstLink?.focus(), 80);
     } else {
       document.getElementById("content")?.removeAttribute("inert");
-      pauseBtn?.removeAttribute("inert");
       setTimeout(() => burger?.focus(), 160);
     }
   }
@@ -253,51 +291,12 @@
   });
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-
+  const videoEl = document.getElementById("bg-video");
   function applyMotion() {
-    if (!video) return;
-    if (reduceMotion.matches) {
-      video.pause();
-      playing = false;
-      updatePauseIcon();
-    } else {
-      video
-        .play()
-        .then(() => {
-          playing = true;
-          updatePauseIcon();
-        })
-        .catch(() => {
-          playing = false;
-          updatePauseIcon();
-        });
-    }
+    if (!videoEl) return;
+    if (reduceMotion.matches) videoEl.pause();
+    else videoEl.play().catch(() => {});
   }
-
-  function updatePauseIcon() {
-    if (!pauseBtn) return;
-    pauseBtn.setAttribute(
-      "aria-label",
-      playing ? "Остановить фоновое видео" : "Воспроизвести фоновое видео",
-    );
-    pauseBtn.innerHTML = playing
-      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`
-      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="transform:translateX(1px)"><polygon points="5 3 19 12 5 21 5 3"/></svg>`;
-  }
-
-  pauseBtn?.addEventListener("click", () => {
-    if (!video) return;
-    if (video.paused) {
-      video.play();
-      playing = true;
-    } else {
-      video.pause();
-      playing = false;
-    }
-    updatePauseIcon();
-  });
-
   applyMotion();
   reduceMotion.addEventListener("change", applyMotion);
-  updatePauseIcon();
 })();

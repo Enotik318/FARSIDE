@@ -27,8 +27,7 @@
     </video>
     <div class="video-vignette"></div>
     <div class="video-scrim"></div>
-    <button type="button" id="bg-pause" aria-label="Остановить фоновое видео"></button>
-  </div>
+</div>
 
   <div class="nav-shell">
     <a class="skip-link" href="#content">К содержанию</a>
@@ -105,13 +104,30 @@
       <p class="kicker hero-enter" data-i18n="gen.kicker">Генератор</p>
       <h1 class="headline hero-enter hero-enter-1"><span data-i18n="gen.title1">Найди свой</span><br /><em data-i18n="gen.title2">новый жанр</em></h1>
     </div>
-    <div class="gen-layout hero-enter hero-enter-2">
-      <div class="gen-top">
-        <button class="btn btn-primary" id="generate-btn" type="button">
-          <span data-i18n="gen.btn">Запустить генератор</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        </button>
-        <p class="gen-genre" id="genre-out" data-i18n="gen.placeholder">Жанр появится здесь</p>
+        <div class="gen-layout hero-enter hero-enter-2">
+      <div class="gen-bar">
+        <div class="gen-bar-top">
+          <p class="gen-bar-label" data-i18n="gen.filters">Настрой поиск</p>
+        </div>
+        <div class="gen-filters" id="gen-filters" role="listbox" aria-label="Фильтры">
+          <button type="button" class="gen-filter is-active" data-filter="all" data-i18n="gen.fAll">Все жанры</button>
+          <button type="button" class="gen-filter" data-filter="calm" data-i18n="gen.fCalm">Спокойное</button>
+          <button type="button" class="gen-filter" data-filter="folk" data-i18n="gen.fFolk">Народные</button>
+          <button type="button" class="gen-filter" data-filter="energy" data-i18n="gen.fEnergy">Энергия</button>
+          <button type="button" class="gen-filter" data-filter="dark" data-i18n="gen.fDark">Тёмное</button>
+          <button type="button" class="gen-filter" data-filter="latin" data-i18n="gen.fLatin">Латина</button>
+          <button type="button" class="gen-filter" data-filter="electronic" data-i18n="gen.fElec">Электроника</button>
+          <button type="button" class="gen-filter" data-filter="rock" data-i18n="gen.fRock">Рок</button>
+          <button type="button" class="gen-filter" data-filter="hiphop" data-i18n="gen.fHip">Хип-хоп</button>
+          <button type="button" class="gen-filter" data-filter="pop" data-i18n="gen.fPop">Поп</button>
+        </div>
+        <div class="gen-bar-actions">
+          <button class="btn btn-primary" id="generate-btn" type="button">
+            <span data-i18n="gen.btn">Запустить генератор</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </button>
+          <p class="gen-genre" id="genre-out" data-i18n="gen.placeholder">Жанр появится здесь</p>
+        </div>
       </div>
       <div class="gen-row">
         <div class="gen-left" id="gen-left">
@@ -133,5 +149,5 @@
   </main>
   <script src="app.js"></script>
   <script src="generator.js"></script>
-  </body>
+</body>
 </html>

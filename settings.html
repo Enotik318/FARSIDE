@@ -27,8 +27,7 @@
     </video>
     <div class="video-vignette"></div>
     <div class="video-scrim"></div>
-    <button type="button" id="bg-pause" aria-label="Остановить фоновое видео"></button>
-  </div>
+</div>
 
   <div class="nav-shell">
     <a class="skip-link" href="#content">К содержанию</a>
@@ -101,6 +100,7 @@
   </div>
 
   
+  
   <main class="stage settings-stage" id="content">
     <p class="kicker hero-enter" data-i18n="set.kicker">Система</p>
     <h1 class="headline hero-enter hero-enter-1" style="font-size:clamp(2.2rem,5vw,3.2rem)" data-i18n="set.title">Настройки</h1>
@@ -139,37 +139,71 @@
       </div>
 
       <section class="settings-card mars-panel" id="mars">
-        <h2>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-          <span data-i18n="mars.title">Фон · Марс</span>
-        </h2>
-        <p data-i18n="mars.lead">Настрой видео Марса: затемнение, контраст, насыщенность, ч/б.</p>
-
-        <div class="mars-fields">
-          <div class="planet-field">
-            <label for="mars-bright" data-i18n="mars.bright">Яркость</label>
-            <input type="range" id="mars-bright" min="20" max="120" value="52" />
+        <div class="mars-panel-grid">
+          <div class="mars-panel-main">
+            <h2>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+              <span data-i18n="mars.title">Фон</span>
+            </h2>
+            <p data-i18n="mars.lead">Затемнение, контраст, насыщенность — для выбранной планеты.</p>
+            <div class="mars-fields">
+              <div class="planet-field">
+                <label for="mars-bright" data-i18n="mars.bright">Яркость</label>
+                <input type="range" id="mars-bright" min="20" max="120" value="52" />
+              </div>
+              <div class="planet-field">
+                <label for="mars-contrast" data-i18n="mars.contrast">Контраст</label>
+                <input type="range" id="mars-contrast" min="80" max="150" value="115" />
+              </div>
+              <div class="planet-field">
+                <label for="mars-saturate" data-i18n="mars.saturate">Насыщенность</label>
+                <input type="range" id="mars-saturate" min="0" max="150" value="0" />
+              </div>
+              <div class="planet-field">
+                <label for="mars-gray" data-i18n="mars.gray">Чёрно-белый</label>
+                <input type="range" id="mars-gray" min="0" max="100" value="100" />
+              </div>
+              <div class="planet-field">
+                <label for="mars-opacity" data-i18n="mars.opacity">Прозрачность видео</label>
+                <input type="range" id="mars-opacity" min="30" max="100" value="100" />
+              </div>
+              <div class="planet-actions">
+                <button type="button" class="btn btn-primary btn-sm" id="mars-save" data-i18n="mars.save">Сохранить</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="mars-reset" data-i18n="mars.reset">Сбросить</button>
+              </div>
+            </div>
           </div>
-          <div class="planet-field">
-            <label for="mars-contrast" data-i18n="mars.contrast">Контраст</label>
-            <input type="range" id="mars-contrast" min="80" max="150" value="115" />
-          </div>
-          <div class="planet-field">
-            <label for="mars-saturate" data-i18n="mars.saturate">Насыщенность</label>
-            <input type="range" id="mars-saturate" min="0" max="150" value="0" />
-          </div>
-          <div class="planet-field">
-            <label for="mars-gray" data-i18n="mars.gray">Чёрно-белый</label>
-            <input type="range" id="mars-gray" min="0" max="100" value="100" />
-          </div>
-          <div class="planet-field">
-            <label for="mars-opacity" data-i18n="mars.opacity">Прозрачность видео</label>
-            <input type="range" id="mars-opacity" min="30" max="100" value="100" />
-          </div>
-          <div class="planet-actions">
-            <button type="button" class="btn btn-primary btn-sm" id="mars-save" data-i18n="mars.save">Сохранить</button>
-            <button type="button" class="btn btn-ghost btn-sm" id="mars-reset" data-i18n="mars.reset">Сбросить</button>
-          </div>
+          <aside class="planet-mini" aria-label="Планеты">
+            <p class="planet-picker-label" data-i18n="mars.planets">Планеты</p>
+            <ul class="planet-picker-list" id="planet-source-list">
+              <li>
+                <button type="button" class="planet-pick is-active" data-src="mars" id="src-mars">
+                  <span class="planet-pick-thumb">
+                    <video muted loop playsinline preload="metadata">
+                      <source src="media/mainfon.mp4" type="video/mp4" />
+                    </video>
+                  </span>
+                  <span class="planet-pick-meta">
+                    <strong data-i18n="mars.mars">Марс</strong>
+                    <span data-i18n="mars.video">Видео</span>
+                  </span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="planet-pick" data-src="luna" id="src-luna">
+                  <span class="planet-pick-thumb">
+                    <video muted loop playsinline preload="metadata">
+                      <source src="media/fonLuna.mp4" type="video/mp4" />
+                    </video>
+                  </span>
+                  <span class="planet-pick-meta">
+                    <strong data-i18n="mars.luna">Луна</strong>
+                    <span data-i18n="mars.video">Видео</span>
+                  </span>
+                </button>
+              </li>
+            </ul>
+          </aside>
         </div>
       </section>
     </div>
