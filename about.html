@@ -14,7 +14,9 @@
   <script>
     (function () {
       var t = localStorage.getItem("farside-theme") || "dark";
+      var l = localStorage.getItem("farside-lang") || "ru";
       document.documentElement.setAttribute("data-theme", t);
+      document.documentElement.setAttribute("lang", l);
     })();
   </script>
 </head>
@@ -30,68 +32,101 @@
 
   <div class="nav-shell">
     <a class="skip-link" href="#content">К содержанию</a>
-    <header class="topbar">
-      <a class="topbar-brand" href="index.html">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="3.5" ry="8"/><path d="M4 12h16"/></svg>
-        FARSIDE
-      </a>
-      <nav class="topbar-links" aria-label="Основная навигация">
-        <a href="index.html">Главная</a>
-        <a href="generator.html">Генератор</a>
-        <a href="about.html">Манифест</a>
-        <a href="settings.html">Настройки</a>
-      </nav>
+    <div class="icon-rail">
+      <div class="rail-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="8"/>
+          <ellipse cx="12" cy="12" rx="3.5" ry="8"/>
+          <path d="M4 12h16"/>
+        </svg>
+      </div>
       <button type="button" class="burger-btn" id="burger" aria-expanded="false" aria-controls="nav-panel" aria-label="Открыть меню">
         <span class="burger-icon" id="burger-icon"><span></span><span></span></span>
       </button>
-    </header>
+      <div class="rail-spacer"></div>
+      <span class="rail-brand">FARSIDE</span>
+    </div>
+    <div class="mobile-topbar"><span>FARSIDE</span></div>
     <div class="nav-overlay" id="nav-overlay" aria-hidden="true"></div>
     <aside class="nav-panel" id="nav-panel" role="dialog" aria-modal="true" aria-label="Навигация">
       <div class="nav-panel-head">
-        <div class="nav-panel-title">Меню</div>
+        <div class="nav-panel-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <span data-i18n="nav.menu">Меню</span>
+        </div>
         <button type="button" class="nav-close" id="nav-close" aria-label="Закрыть">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="nav-scroll">
-        <ul class="nav-items">
-          <li><a href="index.html"><span class="nav-text">Главная</span><span class="nav-count">01</span></a></li>
-          <li><a href="generator.html"><span class="nav-text">Генератор</span><span class="nav-count">02</span></a></li>
-          <li><a href="about.html"><span class="nav-text">Манифест</span><span class="nav-count">03</span></a></li>
-          <li><a href="settings.html"><span class="nav-text">Настройки</span><span class="nav-count">04</span></a></li>
-        </ul>
+        <div class="nav-section">
+          <p class="nav-section-label" data-i18n="nav.section">Навигация</p>
+          <ul class="nav-items">
+            <li>
+              <a href="index.html">
+                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+                <span class="nav-text" data-i18n="nav.home">Главная</span>
+                <span class="nav-count">01</span>
+              </a>
+            </li>
+            <li>
+              <a href="generator.html">
+                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>
+                <span class="nav-text" data-i18n="nav.generator">Генератор</span>
+                <span class="nav-count">02</span>
+              </a>
+            </li>
+            <li>
+              <a href="about.html">
+                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+                <span class="nav-text" data-i18n="nav.manifesto">Манифест</span>
+                <span class="nav-count">03</span>
+              </a>
+            </li>
+            <li>
+              <a href="settings.html">
+                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></span>
+                <span class="nav-text" data-i18n="nav.settings">Настройки</span>
+                <span class="nav-count">04</span>
+              </a>
+            </li>
+          </ul>
+        </div>
       </div>
-      <p class="nav-footer">Случайный жанр за горизонтом привычного звука.</p>
+      <p class="nav-footer" data-i18n="nav.footer">Случайный жанр за горизонтом привычного звука.</p>
     </aside>
   </div>
 
   <main class="stage" id="content">
     <div class="manifesto-layout">
+      <aside class="genre-rail hero-enter hero-enter-2" aria-label="База жанров">
+        <div class="genre-rail-head">
+          <p class="genre-rail-label" data-i18n="about.db">База жанров</p>
+          <span class="genre-rail-count" id="genre-count">…</span>
+        </div>
+        <ul class="genre-rail-list" id="genre-list">
+          <li class="genre-rail-status" data-i18n="about.loading">Загрузка списка…</li>
+        </ul>
+        <a class="genre-rail-more" href="generator.html" data-i18n="about.random">Случайный →</a>
+      </aside>
       <div class="stage-inner narrow">
-        <p class="kicker hero-enter">Манифест</p>
-        <h1 class="headline hero-enter hero-enter-1">Алгоритм устал.<br /><em>Ты — нет.</em></h1>
+        <p class="kicker hero-enter" data-i18n="about.kicker">Манифест</p>
+        <h1 class="headline hero-enter hero-enter-1"><span data-i18n="about.title1">Алгоритм устал.</span><br /><em data-i18n="about.title2">Ты — нет.</em></h1>
         <div class="manifesto hero-enter hero-enter-2">
-          <p>Рекомендации сужают вкус до коридора. FARSIDE делает наоборот: бросает в сторону, которую сам бы не выбрал.</p>
-          <p>В Spotify тысячи микро-жанров. Полный список — справа. Генератор вытащит один и покажет, куда идти дальше.</p>
-          <p>Горизонт уже здесь.</p>
+          <p data-i18n="about.p1">Рекомендации сужают вкус до коридора. FARSIDE делает наоборот: бросает в сторону, которую сам бы не выбрал.</p>
+          <p data-i18n="about.p2">В Spotify тысячи микро-жанров. Полный список — слева. Генератор вытащит один и покажет, куда идти дальше.</p>
+          <p data-i18n="about.p3">Горизонт уже здесь.</p>
         </div>
         <div class="actions hero-enter hero-enter-3">
           <a class="btn btn-primary" href="generator.html">
-            К генератору
+            <span data-i18n="about.cta">К генератору</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </a>
         </div>
       </div>
-      <aside class="genre-rail hero-enter hero-enter-2" aria-label="Все жанры">
-        <div class="genre-rail-head">
-          <p class="genre-rail-label">Все жанры</p>
-          <span class="genre-rail-count" id="genre-count">…</span>
-        </div>
-        <ul class="genre-rail-list" id="genre-list">
-          <li class="genre-rail-status">Загрузка списка…</li>
-        </ul>
-        <a class="genre-rail-more" href="generator.html">Случайный →</a>
-      </aside>
     </div>
   </main>
   <script src="app.js"></script>
@@ -114,7 +149,7 @@
         });
         list.appendChild(frag);
       } catch (e) {
-        list.innerHTML = "<li class=\"genre-rail-status\">Не удалось загрузить genres.txt (открой через локальный сервер или GitHub Pages)</li>";
+        list.innerHTML = "<li class=\"genre-rail-status\">genres.txt — нужен локальный сервер</li>";
         count.textContent = "—";
       }
     })();
