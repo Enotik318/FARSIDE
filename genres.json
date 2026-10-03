@@ -1,0 +1,188 @@
+{
+  "pop": {
+    "blurb": "самая широкая полка мейнстрима: хук, чистый вокал и форма, которую считываешь с первого припева.",
+    "origin": "глобальная радио- и стриминговая индустрия",
+    "regions": ["Global"],
+    "sound": "Полированный бит, центральный вокал, припев как главный товар."
+  },
+  "dance pop": {
+    "blurb": "поп, заточенный под танцпол: чопыесный бит и припев, который держит зал.",
+    "origin": "club-pop и radio crossover",
+    "regions": ["Global", "US", "UK"],
+    "sound": "Четыре четверти или плотный dance-groove, вокал поверх яркого синтезатора."
+  },
+  "rap": {
+    "blurb": "текст и флоу как главный инструмент; бит — сцена, на которой разворачивается речь.",
+    "origin": "хип-хоп культура, от блок-пати к глобальному стримингу",
+    "regions": ["US", "Global"],
+    "sound": "Ритм-секция под куплет, хук опционален, важнее характер голоса."
+  },
+  "rock": {
+    "blurb": "гитарный позвоночник западной популярной музыки — от радио-рока до более сырых ветвей.",
+    "origin": "США / UK, вторая половина XX века",
+    "regions": ["US", "UK", "Global"],
+    "sound": "Электрогитары, барабаны, бас; вокал часто в центре, но не всегда."
+  },
+  "hip hop": {
+    "blurb": "культура бита, слова и сэмпла; жанр-зонтик для сотен региональных и микро-стилей.",
+    "origin": "New York, 1970-е → глобально",
+    "regions": ["US", "Global"],
+    "sound": "Бит + вокал/рэп; от boom bap до trap-эстетики."
+  },
+  "urbano latino": {
+    "blurb": "современный латинский городской звук: reggaeton, trap latino и соседние танцевальные формы.",
+    "origin": "Латинская Америка и латино-диаспоры",
+    "regions": ["Latin America", "US"],
+    "sound": "Демоучер-бит, синкопы, испаноязычный вокал."
+  },
+  "edm": {
+    "blurb": "фестивальная электронная музыка широкого профиля — суперструктура для house, techno и big-room ветвей.",
+    "origin": "глобальный rave / festival circuit",
+    "regions": ["Global"],
+    "sound": "Громкий дроп, синтетический лид, танцевальный каркас."
+  },
+  "reggaeton": {
+    "blurb": "dembow-ритм, разговорный или певучий вокал, танцуется почти автоматически.",
+    "origin": "Puerto Rico → Latin global",
+    "regions": ["Puerto Rico", "Latin America", "US"],
+    "sound": "Характерный dembow, 808, хуки на испанском."
+  },
+  "trap": {
+    "blurb": "хип-хоп ветвь с тяжёлым 808, хэт-роллами и холодной или гимновой атмосферой.",
+    "origin": "Southern US (Atlanta) → global",
+    "regions": ["US South", "Global"],
+    "sound": "Deep 808, fast hats, sparse or cinematic pads."
+  },
+  "sierreno": {
+    "blurb": "мексиканский региональный стиль с резкой гитарой, плотным басом и прямым вокалом о любви, границах и ночи.",
+    "origin": "северо-запад Мексики и мексикано-американские сцены",
+    "regions": ["Mexico", "US Southwest"],
+    "sound": "Яркая реквиенто-гитара, туба/бас, танцевальный или балладовый темп."
+  },
+  "sad sierreno": {
+    "blurb": "sierreno в минорной, сердечной версии — те же гитары, но текст и гармония тянут вниз.",
+    "origin": "regional Mexican + интернет-эстетика «sad»",
+    "regions": ["Mexico", "US Southwest"],
+    "sound": "Меланхоличные прогрессии, вокал на разрыве, гитарный чистый тон."
+  },
+  "synthwave": {
+    "blurb": "ретро-футуризм 80-х: аналоговые пэды, неоновые арпеджио и киношный драйв без обязательного вокала.",
+    "origin": "онлайн-сцена 2010-х",
+    "regions": ["Global", "Online"],
+    "sound": "Analog-style synths, gated drums, chrome nostalgia."
+  },
+  "ambient": {
+    "blurb": "ткань из тембра и пространства; удар вторичен, важнее воздух и долгие гармонии.",
+    "origin": "от Brian Eno к клубному и саундскейп-амбиенту",
+    "regions": ["UK", "Global"],
+    "sound": "Дроны, полевые записи, мягкие пэды, мало транзакций."
+  },
+  "corrido": {
+    "blurb": "мексиканская повествовательная песня — история в куплетах, часто с сильным региональным колоритом.",
+    "origin": "Mexico",
+    "regions": ["Mexico", "US Southwest"],
+    "sound": "Гитары, иногда туба и аккордеон; вокал ведёт сюжет."
+  },
+  "k-pop": {
+    "blurb": "корейская idol-поп экосистема: максимальный хук, перформанс и продюсерская плотность.",
+    "origin": "South Korea",
+    "regions": ["South Korea", "Global"],
+    "sound": "Гибрид pop, hip-hop и EDM в одной трек-структуре."
+  },
+  "j-pop": {
+    "blurb": "японский мейнстрим-поп с собственной мелодической и idol-традицией.",
+    "origin": "Japan",
+    "regions": ["Japan"],
+    "sound": "Яркие мелодии, плотная аранжировка, иногда anime/city-pop окраска."
+  },
+  "philly soul": {
+    "blurb": "пышный soul из Филадельфии: струнные, мягкий groove и тёплый вокал.",
+    "origin": "Philadelphia, 1970s",
+    "regions": ["US"],
+    "sound": "Lush strings, elegant rhythm section, smooth leads."
+  },
+  "permanent wave": {
+    "blurb": "современный «белый» инди/альт-поп зонтик Spotify — пост-new wave меланхолия и гитарный лоск.",
+    "origin": "плейлистный конструкт Spotify",
+    "regions": ["Global"],
+    "sound": "Чистые гитары, меланхоличный вокал, mid-tempo."
+  },
+  "tropical house": {
+    "blurb": "мягкий house с «островным» сиянием — steel-drum оттенки, лёгкий вокал, радиодружелюбный дроп.",
+    "origin": "2010s festival / radio house",
+    "regions": ["Global"],
+    "sound": "Four-on-the-floor, bright plucks, airy vocals."
+  },
+  "mellow gold": {
+    "blurb": "мягкий classic soft-rock и singer-songwriter канон — тёплый, радио-эры 70-х.",
+    "origin": "US/UK 1970s soft rock",
+    "regions": ["US", "UK"],
+    "sound": "Acoustic/electric blend, gentle leads, polished midrange."
+  },
+  "neo soul": {
+    "blurb": "наследник soul с хип-хоп и джазовой свободой — живые аккорды, чувственный вокал.",
+    "origin": "1990s US",
+    "regions": ["US", "Global"],
+    "sound": "Rich harmony, organic drums, intimate vocals."
+  },
+  "drill": {
+    "blurb": "холодный, скользящий хип-хоп с характерными слайдами 808 и уличным тоном — UK и Chicago ветви отличаются.",
+    "origin": "Chicago → UK → global",
+    "regions": ["US", "UK", "Global"],
+    "sound": "Sliding bass, sparse hats, stark atmosphere."
+  },
+  "shoegaze": {
+    "blurb": "стена гитарного шума и утопленный вокал — шум как нежность.",
+    "origin": "UK late 80s / early 90s",
+    "regions": ["UK", "Global"],
+    "sound": "Fuzz, reverb, obscured vocals, blissful density."
+  },
+  "lo-fi": {
+    "blurb": "камерная шероховатость, часто для учёбы и фона: винил-шум, простой бит, джазовые аккорды.",
+    "origin": "internet beat scene",
+    "regions": ["Online", "Global"],
+    "sound": "Dusty drums, soft keys, loop aesthetics."
+  },
+  "black metal": {
+    "blurb": "высокий тремоло-шум, скрим, ледяная атмосфера — радикальная ветвь метала.",
+    "origin": "Scandinavia (esp. Norway) / global underground",
+    "regions": ["Norway", "Europe", "Global"],
+    "sound": "Tremolo riffs, blast beats, harsh vocals, lo-fi or symphonic extremes."
+  },
+  "afrobeat": {
+    "blurb": "полиритмия, политика и groove — линия от Fela Kuti к современной афро-популяции стриминга.",
+    "origin": "Nigeria / West Africa",
+    "regions": ["West Africa", "Global"],
+    "sound": "Interlocking percussion, horns, extended jams or modern pop hybrids."
+  },
+  "bossa nova": {
+    "blurb": "бразильская мягкость: гитара, шёпот вокала, джазовая гармония.",
+    "origin": "Brazil (Rio), late 1950s",
+    "regions": ["Brazil", "Global"],
+    "sound": "Nylon guitar, subtle swing, cool tone."
+  },
+  "city pop": {
+    "blurb": "японский urban pop конца 70-х–80-х: блеск, funk и океанская ностальгия.",
+    "origin": "Japan",
+    "regions": ["Japan", "Global revival"],
+    "sound": "Funky bass, bright keys, glossy production."
+  },
+  "hyperpop": {
+    "blurb": "перегретый интернет-поп: глитч, питч, максимальная синтетика и мемная эстетика.",
+    "origin": "online / PC Music sphere",
+    "regions": ["Online", "UK", "US"],
+    "sound": "Extreme processing, bright leads, chaotic drops."
+  },
+  "phonk": {
+    "blurb": "мемный драйв с cowbell и phonk-басом — от vapor-эстетики к drift-видео.",
+    "origin": "internet / Brazilian and US underground hybrid",
+    "regions": ["Online", "Global"],
+    "sound": "Cowbell, heavy bass, pitched samples, aggressive or woozy mood."
+  },
+  "vanguarda paulista": {
+    "blurb": "экспериментальная бразильская сцена Сан-Паулу — art-rock, poetry и odd pop.",
+    "origin": "São Paulo, Brazil",
+    "regions": ["Brazil"],
+    "sound": "Unconventional song forms, theatrical vocals, art-pop edge."
+  }
+}
