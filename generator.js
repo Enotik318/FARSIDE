@@ -13,7 +13,7 @@ const API_URL = "https://farside-hkic.onrender.com/api/random";
 const FILTERS = {
   all: null,
   calm: ["ambient", "chill", "lo-fi", "lofi", "acoustic", "soft", "sleep", "piano", "classical", "jazz", "bossa", "new age", "meditation", "relax", "downtempo", "dream pop", "mellow", "soul"],
-  folk: ["folk", "country", "americana", "bluegrass", "celtic", "singer-songwriter", "roots", "banjo", "indie folk", "traditional", "sierreno", "corrido", "ranchera", "norteno", "americana"],
+  folk: ["folk", "country", "americana", "bluegrass", "celtic", "singer-songwriter", "roots", "banjo", "indie folk", "traditional", "sierreno", "corrido", "ranchera", "norteno"],
   energy: ["edm", "dance", "techno", "house", "drum and bass", "dnb", "metal", "punk", "hardcore", "trance", "dubstep", "hardstyle", "hard rock"],
   dark: ["dark", "black metal", "gothic", "industrial", "doom", "witch", "horror", "drone", "funeral", "coldwave", "blackgaze"],
   latin: ["latin", "reggaeton", "salsa", "cumbia", "brazilian", "spanish", "corrido", "sierreno", "bachata", "urbano", "mexican", "tango", "norteno", "ranchera", "arrocha", "musica mexicana"],
@@ -21,6 +21,21 @@ const FILTERS = {
   rock: ["rock", "metal", "punk", "grunge", "alternative", "indie rock", "hard rock", "progressive", "post-rock", "shoegaze"],
   hiphop: ["hip hop", "hip-hop", "rap", "trap", "drill", "boom bap", "gangster", "grime"],
   pop: ["pop", "k-pop", "j-pop", "synthpop", "electropop", "dance pop", "indie pop", "art pop"],
+  jazz: ["jazz", "soul", "funk", "neo soul", "bebop", "swing", "bossa"],
+  metal: ["metal", "death", "black metal", "doom", "thrash", "core", "djent"],
+  soft: ["soft", "mellow", "acoustic", "gentle", "quiet", "chamber", "lullaby"],
+  heavy: ["heavy", "hard", "metal", "hardcore", "death", "power", "slam"],
+  punk: ["punk", "hardcore", "post-punk", "pop punk", "ska punk", "crust"],
+  rnb: ["r&b", "rnb", "rhythm and blues", "neo soul", "soul"],
+  classical: ["classical", "orchestra", "baroque", "opera", "chamber"],
+  sad: ["sad", "melancholy", "triste", "emo", "screamo", "heartbreak"],
+  party: ["party", "dance", "club", "edits", "mashup", "viral"],
+  focus: ["focus", "study", "concentration", "piano", "ambient", "lo-fi", "lofi", "coding"],
+  indie: ["indie", "alternative", "diy"],
+  deep: ["deep", "dub", "minimal"],
+  progressive: ["progressive", "prog"],
+  classic_era: ["classic", "old school", "traditional", "vintage", "retro"],
+  modern_era: ["modern", "contemporary"],
 };
 
 const FILTER_LABELS = {
@@ -34,6 +49,39 @@ const FILTER_LABELS = {
   rock: "рок",
   hiphop: "хип-хоп",
   pop: "поп",
+  jazz: "джаз / соул",
+  metal: "метал",
+  soft: "мягкое",
+  heavy: "тяжёлое",
+  night: "ночь",
+  heat: "жара",
+  short: "короткие",
+  long: "длинные",
+  compound: "составные",
+  single: "одно слово",
+  numeric: "с цифрами",
+  regional: "регион",
+  latam: "latam",
+  asia: "азия",
+  europe: "европа",
+  africa: "африка",
+  online: "онлайн-сцены",
+  carded: "с карточкой",
+  rare: "редкие буквы",
+  punk: "панк",
+  rnb: "r&b",
+  classical: "классика",
+  sad: "грустное",
+  party: "вечеринка",
+  focus: "фокус",
+  us: "us",
+  uk: "uk",
+  brazil: "brazil",
+  classic_era: "classic",
+  modern_era: "modern",
+  indie: "indie",
+  deep: "deep",
+  progressive: "progressive",
 };
 
 /** Лексика и крюки по семьям — не один абзац, а пулы фраз */
@@ -142,6 +190,9 @@ const TOKEN_HINTS = {
 };
 
 let activeFilter = "all";
+let lastGenre = null;
+let lastPayload = null;
+const FILTER_KEY = "farside-gen-filter";
 let allGenres = null;
 let t0 = Date.now();
 let logQueue = Promise.resolve();
@@ -149,26 +200,66 @@ const LOG_GAP = 140;
 const LOG_MAX = 18;
 let genresMeta = null;
 
-filtersEl?.addEventListener("click", (e) => {
-  const f = e.target.closest("[data-filter]");
-  if (!f) return;
-  activeFilter = f.getAttribute("data-filter") || "all";
-  filtersEl.querySelectorAll(".gx-filter").forEach((b) => {
-    b.classList.toggle("is-active", b === f);
+
+const COMPASS_ANGLE = {
+  calm: 0,
+  heat: 90,
+  energy: 180,
+  dark: 270,
+  soft: 45,
+  latin: 135,
+  folk: 225,
+  night: 315,
+  all: 0,
+};
+
+function labelFor(key) {
+  return FILTER_LABELS[key] || key;
+}
+
+function setFilter(key) {
+  activeFilter = key || "all";
+  const root = document.getElementById("panel-filters") || document;
+
+  root.querySelectorAll(".gx-filter[data-filter]").forEach((b) => {
+    b.classList.toggle("is-active", b.getAttribute("data-filter") === activeFilter);
   });
+  root.querySelectorAll(".gx-c-dir").forEach((b) => {
+    b.classList.toggle("is-active", b.getAttribute("data-compass") === activeFilter);
+  });
+
+  const needle = document.getElementById("compass-needle");
+  const core = document.getElementById("compass-core");
+  const readout = document.getElementById("compass-readout");
+  const ang = COMPASS_ANGLE[activeFilter];
+  if (needle && ang !== undefined) {
+    needle.style.transform = "rotate(" + ang + "deg)";
+  }
+  if (core) core.textContent = activeFilter === "all" ? "ALL" : activeFilter.slice(0, 4).toUpperCase();
+  if (readout) readout.textContent = "курс · " + labelFor(activeFilter);
+  if (genreFilter) genreFilter.textContent = "фильтр · " + labelFor(activeFilter);
+
+  try { localStorage.setItem(FILTER_KEY, activeFilter); } catch (_) {}
   logLine("set filter " + activeFilter);
   logLine("rebuild pool…");
-  if (genreFilter) {
-    genreFilter.textContent = "фильтр · " + (FILTER_LABELS[activeFilter] || activeFilter);
+}
+
+document.getElementById("panel-filters")?.addEventListener("click", (e) => {
+  const chip = e.target.closest(".gx-filter[data-filter]");
+  if (chip) {
+    setFilter(chip.getAttribute("data-filter") || "all");
+    return;
+  }
+  const dir = e.target.closest("[data-compass]");
+  if (dir) {
+    setFilter(dir.getAttribute("data-compass") || "all");
+    return;
+  }
+  if (e.target.closest("#compass-core")) {
+    setFilter("all");
   }
 });
 
-document.querySelectorAll(".gx-tab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    showPanel(tab.getAttribute("data-panel"));
-    logLine("panel → " + tab.getAttribute("data-panel"));
-  });
-});
 
 function showPanel(id) {
   document.querySelectorAll(".gx-tab").forEach((t) => {
@@ -182,6 +273,16 @@ function showPanel(id) {
     p.hidden = !on;
   });
 }
+
+document.querySelectorAll(".gx-tab").forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const id = tab.getAttribute("data-panel");
+    if (!id) return;
+    showPanel(id);
+    logLine("panel → " + id);
+  });
+});
+
 
 function elapsed() {
   const s = Math.floor((Date.now() - t0) / 1000);
@@ -251,13 +352,73 @@ function fillEther(list) {
   etherTrack.innerHTML = pick.concat(pick).map((g) => "<span>" + g + "</span>").join("");
 }
 
+const REGIONAL_WORDS = ["mexican","mexico","brazilian","brazil","german","french","uk","british","korean","japanese","colombian","argentina","argentino","italian","italiana","turkish","polish","spanish","norteno","sierreno","corrido","ranchera","bollywood","desi","afro","nigerian","caribbean"];
+const NIGHT_WORDS = ["dark","sad","black","doom","drone","night","noir","shadow","cold","funeral","witch","horror","ambient","sleep","melancholy","triste"];
+const HEAT_WORDS = ["dance","edm","party","club","trap","reggaeton","hardstyle","dembow","bounce","festival","techno","house"];
+const LATAM_WORDS = ["latin","latino","reggaeton","sierreno","corrido","norteno","ranchera","cumbia","salsa","bachata","brazilian","brazil","mexican","mexico","argentino","colombian","arrocha","musica mexicana","funk carioca"];
+const ASIA_WORDS = ["k-pop","j-pop","korean","japanese","chinese","mandarin","cantopop","bollywood","desi","indian","thai","indonesian","city pop","anime"];
+const EUROPE_WORDS = ["french","german","italian","polish","swedish","norwegian","uk ","british","euro","dutch","spanish","greek","finnish"];
+const AFRICA_WORDS = ["afro","african","nigerian","ghana","amapiano","afrobeats","afrobeat","soukous","highlife"];
+const ONLINE_WORDS = ["hyperpop","phonk","lo-fi","lofi","vapor","meme","viral","beat","nightcore","speedcore"];
+
 function filterGenres(list, key) {
-  const words = FILTERS[key];
-  if (!words || key === "all") return list;
-  return list.filter((g) => {
-    const low = g.toLowerCase();
-    return words.some((w) => low.includes(w));
-  });
+  if (!key || key === "all") return list;
+
+  if (FILTERS[key]) {
+    const words = FILTERS[key];
+    if (!words) return list;
+    return list.filter((g) => {
+      const low = g.toLowerCase();
+      return words.some((w) => low.includes(w));
+    });
+  }
+
+  if (key === "short") return list.filter((g) => g.length > 0 && g.length <= 8);
+  if (key === "long") return list.filter((g) => g.length >= 16);
+  if (key === "compound") return list.filter((g) => /[\s\-/]/.test(g));
+  if (key === "single") return list.filter((g) => !/[\s\-/]/.test(g));
+  if (key === "numeric") return list.filter((g) => /\d/.test(g));
+  if (key === "regional") {
+    return list.filter((g) => REGIONAL_WORDS.some((w) => g.toLowerCase().includes(w)));
+  }
+  if (key === "latam") {
+    return list.filter((g) => LATAM_WORDS.some((w) => g.toLowerCase().includes(w)));
+  }
+  if (key === "asia") {
+    return list.filter((g) => ASIA_WORDS.some((w) => g.toLowerCase().includes(w)));
+  }
+  if (key === "europe") {
+    return list.filter((g) => EUROPE_WORDS.some((w) => g.toLowerCase().includes(w)));
+  }
+  if (key === "africa") {
+    return list.filter((g) => AFRICA_WORDS.some((w) => g.toLowerCase().includes(w)));
+  }
+  if (key === "online") {
+    return list.filter((g) => ONLINE_WORDS.some((w) => g.toLowerCase().includes(w)));
+  }
+  if (key === "night") {
+    return list.filter((g) => NIGHT_WORDS.some((w) => g.toLowerCase().includes(w)));
+  }
+  if (key === "heat") {
+    return list.filter((g) => HEAT_WORDS.some((w) => g.toLowerCase().includes(w)));
+  }
+  if (key === "carded") {
+    const meta = genresMeta || {};
+    return list.filter((g) => meta[g] || meta[g.toLowerCase()]);
+  }
+  if (key === "rare") {
+    return list.filter((g) => /[qxzj]/i.test(g));
+  }
+  if (key === "us") {
+    return list.filter((g) => /\b(us|american|atlanta|texas|chicago|detroit)\b/i.test(g) || /atl |nyc|la /i.test(g));
+  }
+  if (key === "uk") {
+    return list.filter((g) => /\b(uk|british|london|england|scottish|welsh)\b/i.test(g));
+  }
+  if (key === "brazil") {
+    return list.filter((g) => /brazil|brazilian|carioca|forro|sertanejo|pagode|arrocha|bossa/i.test(g));
+  }
+  return list;
 }
 
 function pickRandom(list) {
@@ -433,6 +594,132 @@ function buildDescription(genre) {
   return body;
 }
 
+function renderPlaylists(playlists, genre, status) {
+  const grid = document.getElementById("playlist-grid");
+  const label = document.getElementById("pl-genre-label");
+  const empty = document.getElementById("pl-empty");
+  if (label) label.textContent = genre || "—";
+  if (!grid) return;
+
+  const list = Array.isArray(playlists) ? playlists.slice(0, 8) : [];
+  grid.innerHTML = "";
+
+  if (!list.length) {
+    if (empty) {
+      empty.hidden = false;
+      const title = empty.querySelector("strong");
+      const sub = empty.querySelector("span");
+      if (status === "offline") {
+        if (title) title.textContent = "API молчит";
+        if (sub) sub.textContent = "Жанр пойман локально, но обложки плейлистов не пришли. Попробуй «Ещё раз» чуть позже.";
+      } else if (status === "empty") {
+        if (title) title.textContent = "Пустой ответ";
+        if (sub) sub.textContent = "Сервер ответил, но плейлистов в выдаче нет.";
+      } else {
+        if (title) title.textContent = "Плейлистов пока нет";
+        if (sub) sub.textContent = "Запусти генератор — сюда подтянутся обложки, когда API ответит.";
+      }
+    }
+    return;
+  }
+
+  if (empty) empty.hidden = true;
+
+  list.forEach((pl, i) => {
+    const url = pl.spotifyUrl || (pl.external_urls && pl.external_urls.spotify) || pl.url || "#";
+    const img = pl.image || (pl.images && pl.images[0] && (pl.images[0].url || pl.images[0])) || "";
+    const name = pl.name || "Playlist";
+    const tracks =
+      pl.tracks_total != null
+        ? pl.tracks_total + " tracks"
+        : pl.tracks && pl.tracks.total != null
+          ? pl.tracks.total + " tracks"
+          : "Spotify";
+    const a = document.createElement("a");
+    a.className = "gx-pl-card gx-pl-in";
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.style.animationDelay = i * 55 + "ms";
+    a.innerHTML =
+      '<div class="gx-pl-cover"' +
+      (img ? ' style="background-image:url(\'' + String(img).replace(/'/g, "%27") + '\')"' : "") +
+      '></div><div class="gx-pl-meta"><strong>' +
+      String(name).replace(/</g, "&lt;") +
+      "</strong><span>" +
+      String(tracks).replace(/</g, "&lt;") +
+      "</span></div>";
+    grid.appendChild(a);
+  });
+}
+
+function fmtDur(ms) {
+  if (ms == null || isNaN(ms)) return "—";
+  const s = Math.round(Number(ms) / 1000);
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return m + ":" + String(r).padStart(2, "0");
+}
+
+function renderTracks(data, genre) {
+  const listEl = document.getElementById("track-list");
+  const label = document.getElementById("tr-genre-label");
+  const empty = document.getElementById("tr-empty");
+  if (label) label.textContent = genre || "—";
+  if (!listEl) return;
+
+  const tracks = data && Array.isArray(data.tracks) ? data.tracks : [];
+  listEl.innerHTML = "";
+
+  if (!tracks.length) {
+    if (empty) {
+      empty.hidden = false;
+      const title = empty.querySelector("strong");
+      const sub = empty.querySelector("span");
+      if (!data) {
+        if (title) title.textContent = "API молчит";
+        if (sub) sub.textContent = "Без ответа сервера треки не подтянуть.";
+      } else {
+        if (title) title.textContent = "Треков нет";
+        if (sub) sub.textContent = "Обнови server.js на Render — поле tracks появится в ответе /api/random.";
+      }
+    }
+    return;
+  }
+  if (empty) empty.hidden = true;
+
+  tracks.slice(0, 15).forEach((tr, i) => {
+    const name = tr.name || "Track";
+    const artists = Array.isArray(tr.artists)
+      ? tr.artists.map((a) => a.name || a).filter(Boolean).join(", ")
+      : tr.artist || "—";
+    const dur = fmtDur(tr.duration_ms);
+    const img = tr.image || "";
+    const url = tr.spotifyUrl || (tr.external_urls && tr.external_urls.spotify) || "#";
+    const row = document.createElement(url !== "#" ? "a" : "div");
+    if (row.tagName === "A") {
+      row.href = url;
+      row.target = "_blank";
+      row.rel = "noopener";
+    }
+    row.className = "gx-track gx-pl-in";
+    row.style.animationDelay = i * 40 + "ms";
+    row.innerHTML =
+      '<span class="gx-track-n">' +
+      (i + 1) +
+      '</span><span class="gx-track-art"' +
+      (img ? ' style="background-image:url(\'' + String(img).replace(/'/g, "%27") + '\')"' : "") +
+      '></span><span class="gx-track-meta"><strong>' +
+      String(name).replace(/</g, "&lt;") +
+      "</strong><span>" +
+      String(artists).replace(/</g, "&lt;") +
+      '</span></span><span class="gx-track-dur">' +
+      dur +
+      "</span>";
+    listEl.appendChild(row);
+  });
+}
+
 function renderResult(genre) {
   const family = detectFamily(genre);
   const label = (FAMILY[family] || FAMILY.default).label;
@@ -446,7 +733,7 @@ function renderResult(genre) {
       "фильтр · " + (FILTER_LABELS[activeFilter] || activeFilter);
   }
   if (genreDesc) genreDesc.innerHTML = buildDescription(genre);
-  showPanel("desc");
+  // не переключаем вкладку — удобно смотреть плейлисты
 }
 
 btn?.addEventListener("click", async () => {
@@ -499,7 +786,12 @@ btn?.addEventListener("click", async () => {
     }
 
     await logLines(["sync buffers", "LOCK: " + genre, "write desc panel"]);
+    lastGenre = genre;
+    lastPayload = data;
     renderResult(genre);
+    const pls = (data && data.playlists) || [];
+    const plStatus = !data ? "offline" : pls.length ? "ok" : "empty";
+    renderPlaylists(pls, genre, plStatus);
     await logLine("done");
   } catch (err) {
     await logLine("ERR exception");
@@ -511,6 +803,46 @@ btn?.addEventListener("click", async () => {
   }
 });
 
+document.getElementById("share-btn")?.addEventListener("click", async () => {
+  const g = lastGenre || (genreOut && genreOut.textContent) || "";
+  if (!g || g === "…" || g === "ожидание сигнала") {
+    logLine("share: nothing locked");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(g);
+    logLine("copied genre: " + g);
+    const b = document.getElementById("share-btn");
+    if (b) {
+      b.classList.add("is-flash");
+      const prev = b.textContent;
+      b.textContent = "Скопировано";
+      setTimeout(() => {
+        b.classList.remove("is-flash");
+        b.textContent = prev || "Копировать жанр";
+      }, 900);
+    }
+  } catch (_) {
+    logLine("clipboard blocked");
+    prompt("Скопируй жанр:", g);
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  const tag = (e.target && e.target.tagName) || "";
+  if (tag === "INPUT" || tag === "TEXTAREA" || (e.target && e.target.isContentEditable)) return;
+  if (e.key === "Enter" && !e.shiftKey && !e.metaKey && !e.ctrlKey) {
+    e.preventDefault();
+    document.getElementById("generate-btn")?.click();
+    return;
+  }
+  const map = { "1": "desc", "2": "filters", "3": "playlists", "4": "tracks" };
+  if (map[e.key]) {
+    showPanel(map[e.key]);
+    logLine("panel → " + map[e.key]);
+  }
+});
+
 (async () => {
   if (signalLines) signalLines.innerHTML = "";
   await logLines(["boot sequence", "load freq table", "open channel", "ether link ok"]);
@@ -518,5 +850,20 @@ btn?.addEventListener("click", async () => {
   const genres = await loadGenres();
   await logLine("ether " + (genres.length || 0) + " tags");
   fillEther(genres.length ? genres : ["ambient", "sierreno", "synthwave"]);
+
+  try {
+    const saved = localStorage.getItem(FILTER_KEY);
+    if (saved) setFilter(saved);
+  } catch (_) {}
+
+  const params = new URLSearchParams(window.location.search);
+  const qGenre = params.get("genre");
+  if (qGenre) {
+    lastGenre = qGenre;
+    renderResult(qGenre);
+    renderPlaylists([], qGenre, "empty");
+    await logLine("deep link: " + qGenre);
+  }
+
   await logLines(["standby", "awaiting launch", "ready"]);
 })();

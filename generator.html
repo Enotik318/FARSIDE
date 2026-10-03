@@ -111,12 +111,17 @@
         <button type="button" class="gx-fire-btn" id="generate-btn">
           <span class="gx-fire-label">Генератор</span>
         </button>
+        <div class="gx-fire-row">
+          <button type="button" class="gx-mini-btn" id="share-btn" title="Копировать название жанра">Копировать жанр</button>
+        </div>
       </div>
 
       <!-- Верх справа: плашки (пока 1) -->
       <div class="gx-tabs" role="tablist" aria-label="Плашки">
-        <button type="button" class="gx-tab is-active" data-panel="desc" role="tab" aria-selected="true">Описание</button>
-        <button type="button" class="gx-tab" data-panel="filters" role="tab" aria-selected="false">Фильтры</button>
+        <button type="button" class="gx-tab is-active" data-panel="desc" role="tab" aria-selected="true">Описание <kbd>1</kbd></button>
+        <button type="button" class="gx-tab" data-panel="filters" role="tab" aria-selected="false">Фильтры <kbd>2</kbd></button>
+        <button type="button" class="gx-tab" data-panel="playlists" role="tab" aria-selected="false">Плейлисты <kbd>3</kbd></button>
+        <button type="button" class="gx-tab" data-panel="tracks" role="tab" aria-selected="false">Треки <kbd>4</kbd></button>
       </div>
 
       <!-- Низ слева: зона X -->
@@ -161,34 +166,130 @@
           </div>
         </div>
 
+                
         <div class="gx-panel" data-panel="filters" id="panel-filters" hidden>
-          <p class="gx-panel-label">Настрой поиск</p>
-          <div class="gx-filters" id="gen-filters">
-            <button type="button" class="gx-filter is-active" data-filter="all">Все жанры</button>
-            <button type="button" class="gx-filter" data-filter="calm">Спокойное</button>
-            <button type="button" class="gx-filter" data-filter="folk">Народные</button>
-            <button type="button" class="gx-filter" data-filter="energy">Энергия</button>
-            <button type="button" class="gx-filter" data-filter="dark">Тёмное</button>
-            <button type="button" class="gx-filter" data-filter="latin">Латина</button>
-            <button type="button" class="gx-filter" data-filter="electronic">Электроника</button>
-            <button type="button" class="gx-filter" data-filter="rock">Рок</button>
-            <button type="button" class="gx-filter" data-filter="hiphop">Хип-хоп</button>
-            <button type="button" class="gx-filter" data-filter="pop">Поп</button>
+          <div class="gx-filter-board">
+            <div class="gx-filter-cats" id="filter-cats">
+              <section class="gx-cat">
+                <h3 class="gx-cat-title">Семья</h3>
+                <div class="gx-filters">
+                  <button type="button" class="gx-filter is-active" data-filter="all">Все</button>
+                  <button type="button" class="gx-filter" data-filter="pop">Поп</button>
+                  <button type="button" class="gx-filter" data-filter="rock">Рок</button>
+                  <button type="button" class="gx-filter" data-filter="hiphop">Хип-хоп</button>
+                  <button type="button" class="gx-filter" data-filter="electronic">Электроника</button>
+                  <button type="button" class="gx-filter" data-filter="folk">Народные</button>
+                  <button type="button" class="gx-filter" data-filter="latin">Латина</button>
+                  <button type="button" class="gx-filter" data-filter="jazz">Джаз / соул</button>
+                  <button type="button" class="gx-filter" data-filter="metal">Метал</button>
+                  <button type="button" class="gx-filter" data-filter="punk">Панк</button>
+                  <button type="button" class="gx-filter" data-filter="rnb">R&amp;B</button>
+                  <button type="button" class="gx-filter" data-filter="classical">Классика</button>
+                </div>
+              </section>
+              <section class="gx-cat">
+                <h3 class="gx-cat-title">Вайб</h3>
+                <div class="gx-filters">
+                  <button type="button" class="gx-filter" data-filter="calm">Спокойное</button>
+                  <button type="button" class="gx-filter" data-filter="energy">Энергия</button>
+                  <button type="button" class="gx-filter" data-filter="dark">Тёмное</button>
+                  <button type="button" class="gx-filter" data-filter="night">Ночь</button>
+                  <button type="button" class="gx-filter" data-filter="heat">Жара</button>
+                  <button type="button" class="gx-filter" data-filter="soft">Мягкое</button>
+                  <button type="button" class="gx-filter" data-filter="heavy">Тяжёлое</button>
+                  <button type="button" class="gx-filter" data-filter="sad">Грустное</button>
+                  <button type="button" class="gx-filter" data-filter="party">Вечеринка</button>
+                  <button type="button" class="gx-filter" data-filter="focus">Фокус</button>
+                </div>
+              </section>
+              <section class="gx-cat">
+                <h3 class="gx-cat-title">Форма имени</h3>
+                <div class="gx-filters">
+                  <button type="button" class="gx-filter" data-filter="short">Короткие</button>
+                  <button type="button" class="gx-filter" data-filter="long">Длинные</button>
+                  <button type="button" class="gx-filter" data-filter="compound">Составные</button>
+                  <button type="button" class="gx-filter" data-filter="single">Одно слово</button>
+                  <button type="button" class="gx-filter" data-filter="numeric">С цифрами</button>
+                </div>
+              </section>
+              <section class="gx-cat">
+                <h3 class="gx-cat-title">Гео / сцена</h3>
+                <div class="gx-filters">
+                  <button type="button" class="gx-filter" data-filter="regional">Регион</button>
+                  <button type="button" class="gx-filter" data-filter="latam">LatAm</button>
+                  <button type="button" class="gx-filter" data-filter="asia">Азия</button>
+                  <button type="button" class="gx-filter" data-filter="europe">Европа</button>
+                  <button type="button" class="gx-filter" data-filter="africa">Африка</button>
+                  <button type="button" class="gx-filter" data-filter="online">Онлайн-сцены</button>
+                  <button type="button" class="gx-filter" data-filter="us">US</button>
+                  <button type="button" class="gx-filter" data-filter="uk">UK</button>
+                  <button type="button" class="gx-filter" data-filter="brazil">Brazil</button>
+                </div>
+              </section>
+              <section class="gx-cat">
+                <h3 class="gx-cat-title">Эра / темп</h3>
+                <div class="gx-filters">
+                  <button type="button" class="gx-filter" data-filter="classic_era">Classic</button>
+                  <button type="button" class="gx-filter" data-filter="modern_era">Modern</button>
+                  <button type="button" class="gx-filter" data-filter="indie">Indie</button>
+                  <button type="button" class="gx-filter" data-filter="deep">Deep</button>
+                  <button type="button" class="gx-filter" data-filter="progressive">Progressive</button>
+                </div>
+              </section>
+              <section class="gx-cat">
+                <h3 class="gx-cat-title">База</h3>
+                <div class="gx-filters">
+                  <button type="button" class="gx-filter" data-filter="carded">С карточкой</button>
+                  <button type="button" class="gx-filter" data-filter="rare">Редкие буквы</button>
+                </div>
+              </section>
+            </div>
+
+            <aside class="gx-compass-wrap">
+              <p class="gx-panel-label">Компас вайба</p>
+              <div class="gx-compass" id="vibe-compass" role="group" aria-label="Компас вайба">
+                <button type="button" class="gx-c-dir gx-c-n" data-compass="calm" title="Спокойное">N<span>calm</span></button>
+                <button type="button" class="gx-c-dir gx-c-e" data-compass="heat" title="Жара">E<span>heat</span></button>
+                <button type="button" class="gx-c-dir gx-c-s" data-compass="energy" title="Энергия">S<span>drive</span></button>
+                <button type="button" class="gx-c-dir gx-c-w" data-compass="dark" title="Тёмное">W<span>dark</span></button>
+                <button type="button" class="gx-c-dir gx-c-ne" data-compass="soft" title="Мягкое">NE</button>
+                <button type="button" class="gx-c-dir gx-c-se" data-compass="latin" title="Латина">SE</button>
+                <button type="button" class="gx-c-dir gx-c-sw" data-compass="folk" title="Народные">SW</button>
+                <button type="button" class="gx-c-dir gx-c-nw" data-compass="night" title="Ночь">NW</button>
+                <div class="gx-c-face">
+                  <span class="gx-c-needle" id="compass-needle"></span>
+                  <button type="button" class="gx-c-core" data-filter="all" id="compass-core">ALL</button>
+                </div>
+              </div>
+              <p class="gx-compass-readout" id="compass-readout">курс · все жанры</p>
+            </aside>
           </div>
         </div>
 
-        <div class="gx-panel" data-panel="map" id="panel-map" hidden>
-          <p class="gx-panel-label">Карта</p>
-          <p class="gx-work-placeholder">Происхождение и популярность</p>
+                <div class="gx-panel" data-panel="playlists" id="panel-playlists" hidden>
+          <div class="gx-pl-head">
+            <p class="gx-panel-label">Плейлисты</p>
+            <p class="gx-pl-genre" id="pl-genre-label">сначала поймай жанр</p>
+          </div>
+          <div class="gx-pl-grid" id="playlist-grid"></div>
+          <div class="gx-empty-state" id="pl-empty">
+            <strong>Плейлистов пока нет</strong>
+            <span>Запусти генератор. Если API молчит — здесь будет честный статус, без фейковых слотов.</span>
+          </div>
         </div>
+
         <div class="gx-panel" data-panel="tracks" id="panel-tracks" hidden>
-          <p class="gx-panel-label">Треки</p>
-          <p class="gx-work-placeholder">Список треков</p>
+          <div class="gx-pl-head">
+            <p class="gx-panel-label">Треки</p>
+            <p class="gx-pl-genre" id="tr-genre-label">—</p>
+          </div>
+          <div class="gx-track-list" id="track-list"></div>
+          <div class="gx-empty-state" id="tr-empty">
+            <strong>Треков пока нет</strong>
+            <span>После генерации сюда придут реальные треки из Spotify. Нужен обновлённый server.js на Render.</span>
+          </div>
         </div>
-        <div class="gx-panel" data-panel="playlists" id="panel-playlists" hidden>
-          <p class="gx-panel-label">Плейлисты</p>
-          <p class="gx-work-placeholder">Подборки Spotify</p>
-        </div>
+
       </section>
     </div>
   </main>
