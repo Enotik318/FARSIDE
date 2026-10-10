@@ -261,6 +261,472 @@ document.getElementById("panel-filters")?.addEventListener("click", (e) => {
 });
 
 
+
+/* —— Interactive genre map —— */
+const REGION_META = {
+  na:  { id: "na",  label: "Северная Америка", en: "North America" },
+  sa:  { id: "sa",  label: "Южная Америка",   en: "South America" },
+  eu:  { id: "eu",  label: "Европа",          en: "Europe" },
+  af:  { id: "af",  label: "Африка",          en: "Africa" },
+  me:  { id: "me",  label: "Ближний Восток",  en: "Middle East" },
+  sas: { id: "sas", label: "Южная Азия",      en: "South Asia" },
+  eas: { id: "eas", label: "Восточная Азия",  en: "East Asia" },
+  sea: { id: "sea", label: "Юго-Восточная Азия", en: "Southeast Asia" },
+  oc:  { id: "oc",  label: "Океания",         en: "Oceania" },
+};
+
+const REGION_CENTERS = {
+  na: [200, 160], sa: [280, 360], eu: [500, 120], af: [510, 280],
+  me: [580, 180], sas: [680, 240], eas: [780, 150], sea: [760, 270], oc: [820, 370],
+};
+
+const TOKEN_REGIONS = [
+  [/k-?pop|korean|seoul/i, ["eas"], "eas"],
+  [/j-?pop|japanese|tokyo|city pop|shibuya/i, ["eas"], "eas"],
+  [/c-?pop|mandopop|cantopop|chinese/i, ["eas"], "eas"],
+  [/thai|vietnam|indo|malay|pilipino|opm|gamelan/i, ["sea"], "sea"],
+  [/bollywood|bhangra|indian|tamil|punjabi/i, ["sas"], "sas"],
+  [/arabic|maghreb|rai|egyptian|levant/i, ["me", "af"], "me"],
+  [/afrobeats|afrobeat|amapiano|naija|ghana|soukous|highlife/i, ["af"], "af"],
+  [/reggaeton|latin|salsa|cumbia|bachata|corrido|sierreno|ranchera|norteno|urbano|mexican|tango|arrocha/i, ["sa", "na"], "sa"],
+  [/brazilian|bossa|samba|forro|funk carioca|sertanejo/i, ["sa"], "sa"],
+  [/francoton|french|chanson/i, ["eu"], "eu"],
+  [/uk |british|grime|britpop|london/i, ["eu"], "eu"],
+  [/german|deutsch|schlager|teutonic/i, ["eu"], "eu"],
+  [/nordic|swedish|norwegian|danish|iceland|finnish/i, ["eu"], "eu"],
+  [/russian|slavic|polish|balkan|turbo-folk/i, ["eu"], "eu"],
+  [/ukrainian|ukraine/i, ["eu"], "eu"],
+  [/celtic|irish|scottish|welsh/i, ["eu"], "eu"],
+  [/americana|nashville|memphis|detroit|chicago|philly|texas|southern hip/i, ["na"], "na"],
+  [/hip hop|hip-hop|trap|drill|boom bap/i, ["na"], "na"],
+  [/country|bluegrass|folk/i, ["na", "eu"], "na"],
+  [/reggae|dancehall|ska|dub\b/i, ["na", "sa"], "na"],
+  [/techno|trance|hardstyle|gabber/i, ["eu"], "eu"],
+  [/synthwave|outrun|retrowave/i, ["na", "eu"], "na"],
+  [/aboriginal|aussie|kiwi|maori/i, ["oc"], "oc"],
+  [/global|worldwide|international/i, ["na"], "na"],
+];
+
+
+const COUNTRY_HINTS = [
+  [/k-?pop|korean|seoul/i, "Южная Корея"],
+  [/j-?pop|japanese|tokyo|city pop|shibuya|kayokyoku/i, "Япония"],
+  [/c-?pop|mandopop|cantopop|chinese/i, "Китай"],
+  [/bollywood|bhangra|tamil|punjabi|indian/i, "Индия"],
+  [/thai|luk thung|molam/i, "Таиланд"],
+  [/vietnam|v-pop/i, "Вьетнам"],
+  [/indo |dangdut|javanese/i, "Индонезия"],
+  [/opm|pilipino|tagalog/i, "Филиппины"],
+  [/afrobeats|afrobeat|naija/i, "Нигерия"],
+  [/amapiano/i, "ЮАР"],
+  [/highlife|ghana/i, "Гана"],
+  [/rai|chaabi/i, "Алжир"],
+  [/egyptian|mahraganat/i, "Египет"],
+  [/reggaeton|urbano latino/i, "Пуэрто-Рико"],
+  [/corrido|sierreno|ranchera|norteno|musica mexicana/i, "Мексика"],
+  [/samba|bossa|forro|sertanejo|funk carioca|brazilian/i, "Бразилия"],
+  [/tango/i, "Аргентина"],
+  [/cumbia/i, "Колумбия"],
+  [/francoton|french|chanson/i, "Франция"],
+  [/grime|britpop|uk garage|uk drill/i, "Великобритания"],
+  [/schlager|deutsch|german/i, "Германия"],
+  [/italo|canzone/i, "Италия"],
+  [/fado/i, "Португалия"],
+  [/flamenco/i, "Испания"],
+  [/celtic|irish/i, "Ирландия"],
+  [/nordic|swedish|norwegian|danish|iceland|finnish/i, "Скандинавия"],
+  [/russian|russian doomer|hardbass/i, "Россия"],
+  [/ukrainian|ukraine|україн/i, "Украина"],
+  [/polish|poland/i, "Польша"],
+  [/turkish|turkce|turkey/i, "Турция"],
+  [/greek|greece/i, "Греция"],
+  [/balkan|turbo-folk/i, "Балканы"],
+  [/detroit techno|motown|memphis|nashville|chicago house|philly soul|texas|americana/i, "США"],
+  [/hip hop|hip-hop|trap|drill|boom bap/i, "США"],
+  [/reggae|dancehall/i, "Ямайка"],
+  [/synthwave|outrun/i, "США"],
+  [/techno/i, "Германия"],
+  [/trance/i, "Нидерланды"],
+  [/aussie|aboriginal/i, "Австралия"],
+  [/kiwi|maori/i, "Новая Зеландия"],
+];
+
+function detectOriginCountry(genre, card) {
+  const name = String(genre || "");
+  const low = name.toLowerCase();
+  if (card && card.country && String(card.country).length < 40) {
+    return String(card.country);
+  }
+  for (const [re, country] of COUNTRY_HINTS) {
+    if (re.test(low)) return country;
+  }
+  // short origin only if it looks like a place, not a sentence
+  if (card && card.origin) {
+    const o = String(card.origin).trim();
+    if (o.length < 28 && !/[.!?]/.test(o) && !/индустр|стрим|традиц|сцен/i.test(o)) return o;
+  }
+  const fam = detectFamily(name);
+  const soft = {
+    latin: "Латинская Америка",
+    hiphop: "США",
+    electronic: "Европа",
+    rock: "США / Великобритания",
+    metal: "Великобритания",
+    pop: "США",
+    jazz: "США",
+    folk: "разные страны",
+    classical: "Европа",
+    default: "неизвестно",
+  };
+  return soft[fam] || soft.default;
+}
+
+function normalizeRegionName(r) {
+  const s = String(r || "").toLowerCase();
+  if (/global|world|worldwide|international|stream/.test(s)) return null;
+  if (/north america|us\b|usa|canada|mexico|american/.test(s)) return "na";
+  if (/south america|brazil|argentina|colombia|peru|chile|latin america/.test(s)) return "sa";
+  if (/europe|uk|britain|france|germany|sweden|norway|spain|italy|russia|poland/.test(s)) return "eu";
+  if (/africa|nigeria|ghana|kenya|south africa/.test(s)) return "af";
+  if (/middle east|arab|iran|turkey|israel|lebanon/.test(s)) return "me";
+  if (/south asia|india|pakistan|bangladesh/.test(s)) return "sas";
+  if (/east asia|japan|korea|china|taiwan/.test(s)) return "eas";
+  if (/southeast asia|indonesia|thailand|vietnam|philippines|malaysia/.test(s)) return "sea";
+  if (/oceania|australia|new zealand|pacific/.test(s)) return "oc";
+  return null;
+}
+
+
+const REGION_FOCUS = {
+  na:  { x: 40,  y: 20,  w: 340, h: 320 },
+  sa:  { x: 180, y: 240, w: 220, h: 260 },
+  eu:  { x: 420, y: 40,  w: 220, h: 200 },
+  af:  { x: 420, y: 140, w: 240, h: 280 },
+  me:  { x: 520, y: 120, w: 180, h: 160 },
+  sas: { x: 620, y: 160, w: 180, h: 180 },
+  eas: { x: 680, y: 40,  w: 260, h: 220 },
+  sea: { x: 700, y: 180, w: 220, h: 180 },
+  oc:  { x: 740, y: 280, w: 220, h: 180 },
+};
+
+const MAP_WORLD = { x: -20, y: -10, w: 990, h: 500 };
+let mapZoomTimer = null;
+
+function setMapView(box, animate) {
+  const svg = document.getElementById("genre-map");
+  if (!svg || !box) return;
+  const target = box.x + " " + box.y + " " + box.w + " " + box.h;
+  if (!animate) {
+    svg.setAttribute("viewBox", target);
+    return;
+  }
+  const cur = (svg.getAttribute("viewBox") || "0 0 950 500").split(/\s+/).map(Number);
+  const from = { x: cur[0], y: cur[1], w: cur[2], h: cur[3] };
+  const t0 = performance.now();
+  const dur = 700;
+  if (mapZoomTimer) cancelAnimationFrame(mapZoomTimer);
+  function frame(now) {
+    const p = Math.min(1, (now - t0) / dur);
+    const e = p < 0.5 ? 2*p*p : -1+(4-2*p)*p; // ease in-out
+    const x = from.x + (box.x - from.x) * e;
+    const y = from.y + (box.y - from.y) * e;
+    const w = from.w + (box.w - from.w) * e;
+    const h = from.h + (box.h - from.h) * e;
+    svg.setAttribute("viewBox", x + " " + y + " " + w + " " + h);
+    if (p < 1) mapZoomTimer = requestAnimationFrame(frame);
+  }
+  mapZoomTimer = requestAnimationFrame(frame);
+}
+
+function focusMapOnRegions(origin, spread) {
+  const ids = [];
+  if (origin) ids.push(origin);
+  (spread || []).forEach((id) => { if (!ids.includes(id)) ids.push(id); });
+  if (!ids.length) {
+    setMapView(MAP_WORLD, true);
+    return;
+  }
+  let minX=9999, minY=9999, maxX=-9999, maxY=-9999;
+  ids.forEach((id) => {
+    const b = REGION_FOCUS[id];
+    if (!b) return;
+    minX = Math.min(minX, b.x);
+    minY = Math.min(minY, b.y);
+    maxX = Math.max(maxX, b.x + b.w);
+    maxY = Math.max(maxY, b.y + b.h);
+  });
+  if (minX > 9000) {
+    setMapView(MAP_WORLD, true);
+    return;
+  }
+  const pad = 36;
+  setMapView({
+    x: minX - pad,
+    y: minY - pad,
+    w: (maxX - minX) + pad * 2,
+    h: (maxY - minY) + pad * 2,
+  }, true);
+}
+
+function detectMapRegions(genre) {
+  const name = String(genre || "");
+  const low = name.toLowerCase();
+  const spread = new Set();
+  let origin = null;
+
+  const card = genresMeta && (genresMeta[low] || genresMeta[name]);
+  if (card) {
+    if (card.country) {
+      const o = normalizeRegionName(card.country) || normalizeRegionName(String(card.origin || ""));
+      if (o) origin = o;
+    }
+    if (Array.isArray(card.regions)) {
+      card.regions.forEach((r) => {
+        const id = normalizeRegionName(r);
+        if (id) spread.add(id);
+      });
+    }
+    if (!origin && card.origin) {
+      const o = normalizeRegionName(card.origin);
+      if (o) origin = o;
+    }
+  }
+
+  for (const [re, zones, ori] of TOKEN_REGIONS) {
+    if (re.test(low)) {
+      if (!origin) origin = ori;
+      // only add zones from the FIRST matching token rule
+      zones.forEach((z) => spread.add(z));
+      break;
+    }
+  }
+
+  // family fallback — ONE origin region only, no continent painting
+  if (!origin) {
+    const fam = detectFamily(name);
+    const famOrigin = {
+      latin: "sa",
+      hiphop: "na",
+      electronic: "eu",
+      rock: "na",
+      metal: "eu",
+      pop: "na",
+      jazz: "na",
+      folk: "na",
+      classical: "eu",
+      reggae: "na",
+      blues: "na",
+      rnb: "na",
+      punk: "na",
+      world: "af",
+      default: null,
+    };
+    origin = famOrigin[fam] || famOrigin.default;
+  }
+
+  if (origin) spread.add(origin);
+
+  // keep at most origin + 2 spread (drop extras)
+  let list = [...spread];
+  if (origin && list.includes(origin)) {
+    list = [origin, ...list.filter((id) => id !== origin)];
+  }
+  list = list.slice(0, 3);
+
+  return { origin, spread: list, card };
+}
+
+function renderMap(genre) {
+  const title = document.getElementById("map-genre-title");
+  const originEl = document.getElementById("map-origin");
+  const countryEl = document.getElementById("map-country");
+  const zonesEl = document.getElementById("map-zones");
+  const readout = document.getElementById("map-readout");
+  const chips = document.getElementById("map-chips");
+  const hot = document.getElementById("map-hotspots");
+  const bars = document.getElementById("map-bars");
+  const soundEl = document.getElementById("map-sound");
+  const svg = document.getElementById("genre-map");
+  if (!svg) return;
+
+  const g = genre || lastGenre || "";
+  if (title) title.textContent = g || "—";
+
+  if (!g || g === "ожидание сигнала" || g === "…" || g === "—") {
+    if (originEl) originEl.textContent = "—";
+    if (countryEl) countryEl.textContent = "—";
+    if (zonesEl) zonesEl.innerHTML = "";
+    if (chips) chips.innerHTML = "";
+    if (bars) bars.innerHTML = "";
+    if (soundEl) soundEl.textContent = "—";
+    if (readout) readout.textContent = "Сначала сгенерируй жанр.";
+    svg.querySelectorAll(".gx-map-region").forEach((p) => {
+      p.classList.remove("is-origin", "is-spread", "is-dim");
+    });
+    if (hot) hot.innerHTML = "";
+    return;
+  }
+
+  const { origin, spread, card } = detectMapRegions(g);
+  const lang = localStorage.getItem("farside-lang") || "ru";
+  const fam = detectFamily(g);
+  const country = detectOriginCountry(g, card);
+
+  svg.querySelectorAll(".gx-map-region").forEach((p) => {
+    const id = p.getAttribute("data-region");
+    const active = spread.includes(id);
+    p.classList.toggle("is-origin", id === origin);
+    p.classList.toggle("is-spread", active && id !== origin);
+    p.classList.toggle("is-dim", spread.length > 0 && !active);
+  });
+
+  if (hot) {
+    hot.innerHTML = "";
+    // single pulse on origin only — cleaner
+    if (origin && REGION_CENTERS[origin]) {
+      const c = REGION_CENTERS[origin];
+      const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      circle.setAttribute("cx", c[0]);
+      circle.setAttribute("cy", c[1]);
+      circle.setAttribute("r", 54);
+      circle.setAttribute("class", "gx-map-hot");
+      hot.appendChild(circle);
+    }
+  }
+
+
+  if (countryEl) countryEl.textContent = country || "—";
+
+  if (originEl) {
+    const meta = origin && REGION_META[origin];
+    originEl.textContent = meta
+      ? lang === "en"
+        ? meta.en
+        : meta.label
+      : "—";
+  }
+
+  if (zonesEl) {
+    zonesEl.innerHTML = spread
+      .map((id) => {
+        const meta = REGION_META[id];
+        const label = meta ? (lang === "en" ? meta.en : meta.label) : id;
+        const tag = id === origin ? "исток" : "слушают";
+        return (
+          '<li class="' +
+          (id === origin ? "is-origin" : "is-spread") +
+          '"><span>' +
+          label +
+          "</span><em>" +
+          tag +
+          "</em></li>"
+        );
+      })
+      .join("");
+  }
+
+  if (bars) {
+    const rows = spread.map((id) => {
+      const meta = REGION_META[id];
+      const label = meta ? (lang === "en" ? meta.en : meta.label) : id;
+      let hsh = 0;
+      const s = g + "|" + id;
+      for (let i = 0; i < s.length; i++) hsh = (hsh * 31 + s.charCodeAt(i)) >>> 0;
+      let pct = 48 + (hsh % 45);
+      if (id === origin) pct = Math.max(pct, 82);
+      return { id, label, pct };
+    });
+    rows.sort((a, b) => b.pct - a.pct);
+    bars.innerHTML = rows
+      .map(
+        (r) =>
+          '<div class="gx-map-bar-row"><span>' +
+          r.label.split(" ")[0] +
+          '</span><div class="gx-map-bar"><i style="width:' +
+          r.pct +
+          '%"></i></div><strong>' +
+          r.pct +
+          "</strong></div>",
+      )
+      .join("");
+    requestAnimationFrame(() => {
+      bars.querySelectorAll(".gx-map-bar i").forEach((el) => {
+        const w = el.style.width;
+        el.style.width = "0";
+        requestAnimationFrame(() => {
+          el.style.width = w;
+        });
+      });
+    });
+  }
+
+  if (soundEl) {
+    soundEl.textContent =
+      (card && card.sound) ||
+      (card && card.blurb) ||
+      "Семейство: " + fam;
+  }
+
+  if (chips) {
+    chips.innerHTML =
+      '<span class="gx-chip">' +
+      fam +
+      "</span>" +
+      (country && country !== "—"
+        ? '<span class="gx-chip">' + country + "</span>"
+        : "");
+  }
+
+  if (readout) {
+    if (card && card.blurb && card.rich) {
+      readout.textContent = card.blurb;
+    } else {
+      readout.textContent = country && country !== "неизвестно"
+        ? "Исток: " + country + (origin ? " · " + (REGION_META[origin] || {}).label : "")
+        : "Регион определён по названию и семейству «" + fam + "».";
+    }
+  }
+}
+
+function bindMapInteractions() {
+  const svg = document.getElementById("genre-map");
+  if (!svg || svg.dataset.bound) return;
+  svg.dataset.bound = "1";
+  const readout = document.getElementById("map-readout");
+  const resetBtn = document.getElementById("map-reset");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => setMapView(MAP_WORLD, true));
+  }
+  svg.querySelectorAll(".gx-map-region").forEach((p) => {
+    p.addEventListener("mouseenter", () => {
+      p.classList.add("is-hover");
+      const id = p.getAttribute("data-region");
+      const meta = REGION_META[id];
+      if (readout && meta) {
+        const lang = localStorage.getItem("farside-lang") || "ru";
+        readout.textContent =
+          (lang === "en" ? meta.en : meta.label) +
+          (p.classList.contains("is-origin")
+            ? " · исток"
+            : p.classList.contains("is-spread")
+              ? " · здесь слушают"
+              : "");
+      }
+    });
+    p.addEventListener("mouseleave", () => p.classList.remove("is-hover"));
+    p.addEventListener("click", () => {
+      const id = p.getAttribute("data-region");
+      if (REGION_FOCUS[id]) {
+        const b = REGION_FOCUS[id];
+        setMapView({ x: b.x - 20, y: b.y - 20, w: b.w + 40, h: b.h + 40 }, true);
+      }
+    });
+  });
+  svg.addEventListener("dblclick", () => setMapView(MAP_WORLD, true));
+}
+
+
+
 function showPanel(id) {
   document.querySelectorAll(".gx-tab").forEach((t) => {
     const on = t.getAttribute("data-panel") === id;
@@ -272,6 +738,8 @@ function showPanel(id) {
     p.classList.toggle("is-active", on);
     p.hidden = !on;
   });
+
+  if (id === "map") renderMap(lastGenre);
 }
 
 document.querySelectorAll(".gx-tab").forEach((tab) => {
@@ -823,7 +1291,9 @@ btn?.addEventListener("click", async () => {
     const plStatus = !data ? "offline" : pls.length ? "ok" : "empty";
     renderPlaylists(pls, genre, plStatus);
     renderTracks(data, genre);
+    renderMap(genre);
     await logLine("tracks " + ((data && data.tracks && data.tracks.length) || 0));
+    await logLine("map ok");
     await logLine("done");
   } catch (err) {
     await logLine("ERR exception");
@@ -860,6 +1330,8 @@ document.getElementById("share-btn")?.addEventListener("click", async () => {
   }
 });
 
+bindMapInteractions();
+
 document.addEventListener("keydown", (e) => {
   const tag = (e.target && e.target.tagName) || "";
   if (tag === "INPUT" || tag === "TEXTAREA" || (e.target && e.target.isContentEditable)) return;
@@ -868,7 +1340,7 @@ document.addEventListener("keydown", (e) => {
     document.getElementById("generate-btn")?.click();
     return;
   }
-  const map = { "1": "desc", "2": "filters", "3": "playlists", "4": "tracks" };
+  const map = { "1": "desc", "2": "filters", "3": "playlists", "4": "tracks", "5": "map" };
   if (map[e.key]) {
     showPanel(map[e.key]);
     logLine("panel → " + map[e.key]);
