@@ -792,6 +792,8 @@ btn?.addEventListener("click", async () => {
     const pls = (data && data.playlists) || [];
     const plStatus = !data ? "offline" : pls.length ? "ok" : "empty";
     renderPlaylists(pls, genre, plStatus);
+    renderTracks(data, genre);
+    await logLine("tracks " + ((data && data.tracks && data.tracks.length) || 0));
     await logLine("done");
   } catch (err) {
     await logLine("ERR exception");
