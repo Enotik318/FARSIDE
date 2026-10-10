@@ -666,14 +666,21 @@ function renderTracks(data, genre) {
   const label = document.getElementById("tr-genre-label");
   const empty = document.getElementById("tr-empty");
   if (label) label.textContent = genre || "—";
-  if (!listEl) return;
 
   const tracks = data && Array.isArray(data.tracks) ? data.tracks : [];
-  listEl.innerHTML = "";
+  console.log("[farside] renderTracks", {
+    genre: genre,
+    hasData: !!data,
+    count: tracks.length,
+    listEl: !!listEl,
+  });
+
+  if (listEl) listEl.innerHTML = "";
 
   if (!tracks.length) {
     if (empty) {
       empty.hidden = false;
+      empty.removeAttribute("hidden");
       const title = empty.querySelector("strong");
       const sub = empty.querySelector("span");
       if (!data) {
@@ -681,12 +688,22 @@ function renderTracks(data, genre) {
         if (sub) sub.textContent = "Без ответа сервера треки не подтянуть.";
       } else {
         if (title) title.textContent = "Треков нет";
-        if (sub) sub.textContent = "Обнови server.js на Render — поле tracks появится в ответе /api/random.";
+        if (sub)
+          sub.textContent =
+            "Сервер ответил, но tracks пустой. Открой консоль (F12) и журнал сигнала.";
       }
     }
     return;
   }
-  if (empty) empty.hidden = true;
+
+  if (empty) {
+    empty.hidden = true;
+    empty.setAttribute("hidden", "");
+  }
+  if (!listEl) {
+    console.warn("[farside] #track-list not found");
+    return;
+  }
 
   tracks.slice(0, 15).forEach((tr, i) => {
     const name = tr.name || "Track";
@@ -695,7 +712,10 @@ function renderTracks(data, genre) {
       : tr.artist || "—";
     const dur = fmtDur(tr.duration_ms);
     const img = tr.image || "";
-    const url = tr.spotifyUrl || (tr.external_urls && tr.external_urls.spotify) || "#";
+    const url =
+      tr.spotifyUrl ||
+      (tr.external_urls && tr.external_urls.spotify) ||
+      "#";
     const row = document.createElement(url !== "#" ? "a" : "div");
     if (row.tagName === "A") {
       row.href = url;
@@ -704,11 +724,16 @@ function renderTracks(data, genre) {
     }
     row.className = "gx-track gx-pl-in";
     row.style.animationDelay = i * 40 + "ms";
+    const imgAttr = img
+      ? ' style="background-image:url(\'' +
+        String(img).replace(/'/g, "%27") +
+        "')\""
+      : "";
     row.innerHTML =
       '<span class="gx-track-n">' +
       (i + 1) +
       '</span><span class="gx-track-art"' +
-      (img ? ' style="background-image:url(\'' + String(img).replace(/'/g, "%27") + '\')"' : "") +
+      imgAttr +
       '></span><span class="gx-track-meta"><strong>' +
       String(name).replace(/</g, "&lt;") +
       "</strong><span>" +
@@ -769,6 +794,11 @@ btn?.addEventListener("click", async () => {
       if (response.ok) {
         data = await response.json();
         await logLine("api 200");
+        await logLine(
+          "api tracks " +
+            (data && Array.isArray(data.tracks) ? data.tracks.length : 0)
+        );
+        console.log("[farside] api payload", data);
       } else await logLine("api " + response.status);
     } catch (_) {
       await logLine("api offline — local lock");
