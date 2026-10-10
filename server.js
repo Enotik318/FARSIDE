@@ -16,7 +16,7 @@ const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error(
-    "Нет ключей в .env — создай файл .env из .env.example и заполни SPOTIFY_CLIENT_ID и SPOTIFY_CLIENT_SECRET",
+    "Нет ключей в .env — SPOTIFY_CLIENT_ID и SPOTIFY_CLIENT_SECRET",
   );
   process.exit(1);
 }
@@ -64,6 +64,20 @@ async function getAccessToken() {
   return cachedToken;
 }
 
+function mapTrack(t) {
+  if (!t || typeof t !== "object" || !t.id) return null;
+  return {
+    id: t.id,
+    name: t.name,
+    artists: (t.artists || []).map((a) => ({ id: a.id, name: a.name })),
+    duration_ms: t.duration_ms,
+    image: t.album?.images?.[0]?.url || t.album?.images?.[1]?.url || null,
+    spotifyUrl: t.external_urls?.spotify || null,
+    preview_url: t.preview_url || null,
+    album: t.album?.name || null,
+  };
+}
+
 async function searchPlaylistsByGenre(genre, limit = 8) {
   const token = await getAccessToken();
   const url = new URL("https://api.spotify.com/v1/search");
@@ -92,13 +106,54 @@ async function searchPlaylistsByGenre(genre, limit = 8) {
     }));
 }
 
-/** Реальные треки из плейлиста Spotify */
-async function getPlaylistTracks(playlistId, limit = 12) {
+/** Треки плейлиста: /items (новый) и fallback /tracks */
+async function getPlaylistTracks(playlistId, limit = 15) {
   if (!playlistId) return [];
   const token = await getAccessToken();
-  const url = new URL(
-    `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
-  );
+  const headers = { Authorization: `Bearer ${token}` };
+
+  const tryUrls = [
+    `https://api.spotify.com/v1/playlists/${playlistId}/items?limit=${limit}&market=US`,
+    `https://api.spotify.com/v1/playlists/${playlistId}/tracks?limit=${limit}&market=US`,
+  ];
+
+  for (const endpoint of tryUrls) {
+    try {
+      const response = await fetch(endpoint, { headers });
+      if (!response.ok) {
+        console.error(`playlist ${playlistId}: ${response.status} ${endpoint}`);
+        continue;
+      }
+      const data = await response.json();
+      const out = [];
+      for (const row of data.items || []) {
+        // Spotify 2026: track может быть boolean, контент в item
+        const raw =
+          row && typeof row === "object"
+            ? row.item && typeof row.item === "object"
+              ? row.item
+              : typeof row.track === "object"
+                ? row.track
+                : null
+            : null;
+        const mapped = mapTrack(raw);
+        if (mapped) out.push(mapped);
+      }
+      if (out.length) return out;
+    } catch (e) {
+      console.error(`playlist fetch fail ${playlistId}:`, e.message || e);
+    }
+  }
+  return [];
+}
+
+/** Запасной путь: поиск треков по названию жанра */
+async function searchTracksByGenre(genre, limit = 15) {
+  const token = await getAccessToken();
+  const url = new URL("https://api.spotify.com/v1/search");
+  // genre: tag often empty for micro-genres — plain text search works better
+  url.searchParams.set("q", genre);
+  url.searchParams.set("type", "track");
   url.searchParams.set("limit", String(limit));
   url.searchParams.set("market", "US");
 
@@ -108,24 +163,14 @@ async function getPlaylistTracks(playlistId, limit = 12) {
 
   if (!response.ok) {
     const text = await response.text();
-    console.error(`tracks ${playlistId}: ${response.status} ${text}`);
+    console.error(`track search: ${response.status} ${text}`);
     return [];
   }
 
   const data = await response.json();
-  return (data.items || [])
-    .map((item) => item?.track)
-    .filter((t) => t && t.id && !t.is_local)
-    .map((t) => ({
-      id: t.id,
-      name: t.name,
-      artists: (t.artists || []).map((a) => ({ id: a.id, name: a.name })),
-      duration_ms: t.duration_ms,
-      image: t.album?.images?.[0]?.url || t.album?.images?.[1]?.url || null,
-      spotifyUrl: t.external_urls?.spotify || null,
-      preview_url: t.preview_url || null,
-      album: t.album?.name || null,
-    }));
+  return (data.tracks?.items || [])
+    .map(mapTrack)
+    .filter(Boolean);
 }
 
 app.get("/", (_req, res) => {
@@ -153,11 +198,15 @@ app.get("/api/random", async (req, res) => {
 
     const playlists = await searchPlaylistsByGenre(genre, 8);
 
-    // треки: берём из первого плейлиста с id; если пусто — пробуем следующий
     let tracks = [];
     for (const pl of playlists.slice(0, 3)) {
       tracks = await getPlaylistTracks(pl.id, 15);
       if (tracks.length) break;
+    }
+
+    // если плейлисты пустые / API режет items — ищем треки по жанру
+    if (!tracks.length) {
+      tracks = await searchTracksByGenre(genre, 15);
     }
 
     res.json({ genre, playlists, tracks });
