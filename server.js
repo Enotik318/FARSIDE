@@ -10,7 +10,7 @@ dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
-const VERSION = "tracks-v3";
+const VERSION = "tracks-v4";
 
 const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
@@ -70,10 +70,7 @@ function mapTrack(t) {
       name: a.name,
     })),
     duration_ms: t.duration_ms ?? null,
-    image:
-      t.album?.images?.[0]?.url ||
-      t.album?.images?.[1]?.url ||
-      null,
+    image: t.album?.images?.[0]?.url || t.album?.images?.[1]?.url || null,
     spotifyUrl: t.external_urls?.spotify || null,
     preview_url: t.preview_url || null,
     album: t.album?.name || null,
@@ -82,16 +79,21 @@ function mapTrack(t) {
 
 async function searchPlaylistsByGenre(genre, limit = 8) {
   const token = await getAccessToken();
-  const url = new URL("https://api.spotify.com/v1/search");
-  url.searchParams.set("q", genre);
-  url.searchParams.set("type", "playlist");
-  url.searchParams.set("limit", String(limit));
+  // limit 1–50; keep modest
+  const safeLimit = Math.min(50, Math.max(1, Number(limit) || 8));
+  const url =
+    "https://api.spotify.com/v1/search?type=playlist&limit=" +
+    safeLimit +
+    "&q=" +
+    encodeURIComponent(genre);
 
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) {
-    throw new Error(`playlist search ${response.status}: ${await response.text()}`);
+    throw new Error(
+      `playlist search ${response.status}: ${await response.text()}`,
+    );
   }
   const data = await response.json();
   return (data.playlists?.items || [])
@@ -105,22 +107,26 @@ async function searchPlaylistsByGenre(genre, limit = 8) {
     }));
 }
 
-async function getPlaylistTracks(playlistId, limit = 15) {
+async function getPlaylistTracks(playlistId, limit = 10) {
   if (!playlistId) return [];
   const token = await getAccessToken();
   const headers = { Authorization: `Bearer ${token}` };
+  const safeLimit = Math.min(50, Math.max(1, Number(limit) || 10));
 
-  // 1) full playlist (sometimes embeds tracks)
-  try {
-    const r = await fetch(
-      `https://api.spotify.com/v1/playlists/${playlistId}?market=US`,
-      { headers },
-    );
-    if (r.ok) {
+  // Client credentials often get 401/403 on playlist items — still try
+  for (const pathPart of ["tracks", "items"]) {
+    const url =
+      `https://api.spotify.com/v1/playlists/${playlistId}/${pathPart}` +
+      `?limit=${safeLimit}&market=US`;
+    try {
+      const r = await fetch(url, { headers });
+      if (!r.ok) {
+        console.error(`${pathPart} ${playlistId}: ${r.status}`);
+        continue;
+      }
       const data = await r.json();
-      const items = data.tracks?.items || [];
       const out = [];
-      for (const row of items) {
+      for (const row of data.items || []) {
         const raw =
           row?.track && typeof row.track === "object"
             ? row.track
@@ -131,41 +137,7 @@ async function getPlaylistTracks(playlistId, limit = 15) {
         if (m) out.push(m);
       }
       if (out.length) {
-        console.log(`playlist ${playlistId} via GET playlist: ${out.length}`);
-        return out.slice(0, limit);
-      }
-    } else {
-      console.error(`GET playlist ${playlistId}: ${r.status}`);
-    }
-  } catch (e) {
-    console.error("GET playlist fail", e.message || e);
-  }
-
-  // 2) /items and /tracks
-  for (const pathPart of ["items", "tracks"]) {
-    try {
-      const r = await fetch(
-        `https://api.spotify.com/v1/playlists/${playlistId}/${pathPart}?limit=${limit}&market=US`,
-        { headers },
-      );
-      if (!r.ok) {
-        console.error(`${pathPart} ${playlistId}: ${r.status}`);
-        continue;
-      }
-      const data = await r.json();
-      const out = [];
-      for (const row of data.items || []) {
-        const raw =
-          row?.item && typeof row.item === "object"
-            ? row.item
-            : row?.track && typeof row.track === "object"
-              ? row.track
-              : null;
-        const m = mapTrack(raw);
-        if (m) out.push(m);
-      }
-      if (out.length) {
-        console.log(`playlist ${playlistId} via /${pathPart}: ${out.length}`);
+        console.log(`playlist ${playlistId} /${pathPart}: ${out.length}`);
         return out;
       }
     } catch (e) {
@@ -175,27 +147,25 @@ async function getPlaylistTracks(playlistId, limit = 15) {
   return [];
 }
 
-async function searchTracksByGenre(genre, limit = 15) {
+async function searchTracksByGenre(genre) {
   const token = await getAccessToken();
   const headers = { Authorization: `Bearer ${token}` };
-  const queries = [
-    genre,
-    `genre:${genre}`,
-    `"${genre}"`,
-  ];
+
+  // Spotify search: limit must be integer 0–50. Build URL manually.
+  // Use 10 — safe for all app tiers.
+  const queries = [genre, `genre:${genre}`];
 
   for (const q of queries) {
-    try {
-      const url = new URL("https://api.spotify.com/v1/search");
-      url.searchParams.set("q", q);
-      url.searchParams.set("type", "track");
-      url.searchParams.set("limit", String(limit));
-      // without market — some apps get more results
+    const url =
+      "https://api.spotify.com/v1/search?type=track&limit=10&market=US&q=" +
+      encodeURIComponent(q);
 
+    try {
+      console.log(`track search url: ${url}`);
       const r = await fetch(url, { headers });
       const text = await r.text();
       if (!r.ok) {
-        console.error(`track search "${q}": ${r.status} ${text.slice(0, 200)}`);
+        console.error(`track search "${q}": ${r.status} ${text.slice(0, 240)}`);
         continue;
       }
       const data = JSON.parse(text);
@@ -244,9 +214,9 @@ app.get("/api/random", async (req, res) => {
     const playlists = await searchPlaylistsByGenre(genre, 8);
 
     let tracks = [];
-    for (const pl of playlists.slice(0, 4)) {
+    for (const pl of playlists.slice(0, 3)) {
       debug.playlistTries += 1;
-      tracks = await getPlaylistTracks(pl.id, 15);
+      tracks = await getPlaylistTracks(pl.id, 10);
       if (tracks.length) {
         debug.trackSource = "playlist:" + pl.id;
         break;
@@ -255,7 +225,7 @@ app.get("/api/random", async (req, res) => {
 
     if (!tracks.length) {
       debug.trackSearchTried = true;
-      tracks = await searchTracksByGenre(genre, 15);
+      tracks = await searchTracksByGenre(genre);
       if (tracks.length) debug.trackSource = "search";
     }
 
