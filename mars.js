@@ -3,6 +3,8 @@
   const SOURCES = {
     mars: "media/mainfon.mp4",
     luna: "media/fonLuna.mp4",
+    neptune: "media/neptyn.mp4",
+    saturn: "media/satyrn.mp4",
   };
   const DEFAULTS = {
     source: "mars",

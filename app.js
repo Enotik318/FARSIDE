@@ -79,6 +79,8 @@
       "mars.planets": "Планеты",
       "mars.mars": "Марс",
       "mars.luna": "Луна",
+      "mars.neptune": "Нептун",
+      "mars.saturn": "Сатурн",
       "mars.video": "Видео",
       "about.playlist": "Плейлист автора",
       "about.tg": "Жизнь Енотов",
@@ -159,6 +161,8 @@
       "mars.planets": "Planets",
       "mars.mars": "Mars",
       "mars.luna": "Moon",
+      "mars.neptune": "Neptune",
+      "mars.saturn": "Saturn",
       "mars.video": "Video",
       "about.playlist": "Author playlist",
       "about.tg": "Raccoon Life",
@@ -198,7 +202,12 @@
 
   // Mars/Luna video from settings
   (function applyMarsBoot() {
-    const SOURCES = { mars: "media/mainfon.mp4", luna: "media/fonLuna.mp4" };
+    const SOURCES = {
+      mars: "media/mainfon.mp4",
+      luna: "media/fonLuna.mp4",
+      neptune: "media/neptyn.mp4",
+      saturn: "media/satyrn.mp4",
+    };
     try {
       const raw = localStorage.getItem("farside-mars");
       const s = raw ? JSON.parse(raw) : {};
