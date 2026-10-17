@@ -79,17 +79,24 @@
               </a>
             </li>
             <li>
-              <a href="about.html">
-                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
-                <span class="nav-text" data-i18n="nav.manifesto">Манифест</span>
+              <a href="tree.html">
+                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M8 7h8"/><path d="M6 12h12"/><path d="M4 17h16"/></svg></span>
+                <span class="nav-text" data-i18n="nav.tree">Дерево</span>
                 <span class="nav-count">03</span>
               </a>
             </li>
             <li>
-              <a href="settings.html">
-                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg></span>
-                <span class="nav-text" data-i18n="nav.settings">Настройки</span>
+              <a href="about.html">
+                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
+                <span class="nav-text" data-i18n="nav.manifesto">Манифест</span>
                 <span class="nav-count">04</span>
+              </a>
+            </li>
+            <li>
+              <a href="profile.html">
+                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                <span class="nav-text" data-i18n="nav.profile">Профиль</span>
+                <span class="nav-count">05</span>
               </a>
             </li>
           </ul>
@@ -103,6 +110,7 @@
   
   <main class="stage settings-stage" id="content">
     <p class="kicker hero-enter" data-i18n="set.kicker">Система</p>
+    <p class="settings-back"><a href="profile.html">← Профиль</a></p>
     <h1 class="headline hero-enter hero-enter-1" style="font-size:clamp(2.2rem,5vw,3.2rem)" data-i18n="set.title">Настройки</h1>
 
     <div class="settings-layout hero-enter hero-enter-2">
@@ -121,6 +129,32 @@
             <button type="button" data-theme-btn="light">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
               <span data-i18n="set.light">Светлая</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="settings-card">
+          <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4"/></svg>
+            <span>Стиль сайта</span>
+          </h2>
+          <p>Облик интерфейса. «FARSIDE» — твой текущий дефолт.</p>
+          <div class="style-switch" role="group" aria-label="Стиль сайта">
+            <button type="button" data-style-btn="default" class="is-active">
+              <span class="style-swatch style-swatch-default"></span>
+              FARSIDE
+            </button>
+            <button type="button" data-style-btn="glass">
+              <span class="style-swatch style-swatch-glass"></span>
+              Glass
+            </button>
+            <button type="button" data-style-btn="paper">
+              <span class="style-swatch style-swatch-paper"></span>
+              Paper
+            </button>
+            <button type="button" data-style-btn="poster">
+              <span class="style-swatch style-swatch-poster"></span>
+              Poster
             </button>
           </div>
         </div>

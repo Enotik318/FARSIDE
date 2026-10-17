@@ -1,5 +1,6 @@
 (() => {
   const THEME_KEY = "farside-theme";
+  const STYLE_KEY = "farside-style";
   const LANG_KEY = "farside-lang";
 
   const I18N = {
@@ -8,8 +9,9 @@
       "nav.section": "Навигация",
       "nav.home": "Главная",
       "nav.generator": "Генератор",
+      "nav.tree": "Дерево",
       "nav.manifesto": "Манифест",
-      "nav.settings": "Настройки",
+      "nav.profile": "Настройки",
       "nav.footer": "Случайный жанр за горизонтом привычного звука.",
       "home.kicker": "Spotify · genre generator",
       "home.title1": "За горизонтом",
@@ -48,6 +50,9 @@
       "gen.marsHint": "Видео-фон",
       "gen.customHint": "Из редактора",
       "gen.editPlanet": "Редактор →",
+      "tree.kicker": "Таксономия",
+      "tree.title": "Дерево жанров",
+      "tree.lead": "От семейств к микро-стилям. Раскрой ветку или найди жанр поиском.",
       "about.db": "База жанров",
       "about.loading": "Загрузка списка…",
       "about.random": "Случайный →",
@@ -90,9 +95,13 @@
       "nav.section": "Navigate",
       "nav.home": "Home",
       "nav.generator": "Generator",
+      "nav.tree": "Tree",
       "nav.manifesto": "Manifesto",
-      "nav.settings": "Settings",
+      "nav.profile": "Settings",
       "nav.footer": "A random genre beyond familiar sound.",
+      "tree.kicker": "Taxonomy",
+      "tree.title": "Genre tree",
+      "tree.lead": "From families to micro-styles. Expand a branch or search.",
       "home.kicker": "Spotify · genre generator",
       "home.title1": "Beyond the horizon",
       "home.title2": "of familiar sound",
@@ -130,6 +139,9 @@
       "gen.marsHint": "Video background",
       "gen.customHint": "From editor",
       "gen.editPlanet": "Editor →",
+      "tree.kicker": "Таксономия",
+      "tree.title": "Дерево жанров",
+      "tree.lead": "От семейств к микро-стилям. Раскрой ветку или найди жанр поиском.",
       "about.db": "Genre database",
       "about.loading": "Loading list…",
       "about.random": "Random →",
@@ -180,13 +192,28 @@
     });
   }
 
+  function getStyle() {
+    const s = localStorage.getItem(STYLE_KEY) || "default";
+    if (s === "terminal" || s === "neon") return "default";
+    return s;
+  }
+
+  function applyStyle(style) {
+    const s = style || "default";
+    document.documentElement.setAttribute("data-style", s);
+    try { localStorage.setItem(STYLE_KEY, s); } catch (_) {}
+    document.querySelectorAll("[data-style-btn]").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.getAttribute("data-style-btn") === s);
+    });
+  }
+
   function getLang() {
     return localStorage.getItem(LANG_KEY) || "ru";
   }
   function applyLang(lang) {
     const dict = I18N[lang] || I18N.ru;
     document.documentElement.setAttribute("lang", lang);
-    localStorage.setItem(LANG_KEY, lang);
+    try { localStorage.setItem(LANG_KEY, lang); } catch (_) {}
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
       if (dict[key] != null) el.textContent = dict[key];
@@ -196,8 +223,8 @@
     });
   }
 
-
   applyTheme(getTheme());
+  applyStyle(getStyle());
   applyLang(getLang());
 
   // Mars/Luna video from settings
@@ -240,6 +267,10 @@
 
   document.querySelectorAll("[data-theme-btn]").forEach((btn) => {
     btn.addEventListener("click", () => applyTheme(btn.getAttribute("data-theme-btn")));
+  });
+
+  document.querySelectorAll("[data-style-btn]").forEach((btn) => {
+    btn.addEventListener("click", () => applyStyle(btn.getAttribute("data-style-btn")));
   });
   document.querySelectorAll("[data-lang-btn]").forEach((btn) => {
     btn.addEventListener("click", () => applyLang(btn.getAttribute("data-lang-btn")));
@@ -308,4 +339,137 @@
   }
   applyMotion();
   reduceMotion.addEventListener("change", applyMotion);
+
+
+  /* ----- intro splash (zastavka) ----- */
+  const INTRO_KEY = "farside-intro-seen";
+
+  function networkIsSlow() {
+    try {
+      const c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      if (!c) return false;
+      if (c.saveData) return true;
+      const t = String(c.effectiveType || "");
+      if (t === "slow-2g" || t === "2g" || t === "3g") return true;
+      if (typeof c.downlink === "number" && c.downlink > 0 && c.downlink < 1.5) return true;
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function mountIntro() {
+    if (sessionStorage.getItem(INTRO_KEY) === "1") return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      try { sessionStorage.setItem(INTRO_KEY, "1"); } catch (_) {}
+      return;
+    }
+
+    const slow = networkIsSlow();
+    const overlay = document.createElement("div");
+    overlay.className = "fs-intro";
+    overlay.id = "fs-intro";
+    overlay.innerHTML =
+      '<video class="fs-intro-video" playsinline preload="auto" autoplay' +
+      (slow ? " loop" : "") +
+      ">" +
+      '<source src="media/zastavka.mp4" type="video/mp4" />' +
+      "</video>" +
+      '<div class="fs-intro-ui">' +
+      '<button type="button" class="fs-intro-sound" id="fs-intro-sound" title="Звук">🔊</button>' +
+      '<button type="button" class="fs-intro-skip" id="fs-intro-skip">Пропустить</button>' +
+      "</div>";
+
+    document.body.appendChild(overlay);
+    document.body.classList.add("fs-intro-lock");
+
+    const video = overlay.querySelector("video");
+    const skipBtn = overlay.querySelector("#fs-intro-skip");
+    const soundBtn = overlay.querySelector("#fs-intro-sound");
+    let closed = false;
+    let slowTimer = null;
+
+    function closeIntro() {
+      if (closed) return;
+      closed = true;
+      try { sessionStorage.setItem(INTRO_KEY, "1"); } catch (_) {}
+      if (slowTimer) clearTimeout(slowTimer);
+      overlay.classList.add("is-out");
+      try { video.pause(); } catch (_) {}
+      document.body.classList.remove("fs-intro-lock");
+      setTimeout(() => {
+        try { overlay.remove(); } catch (_) {}
+      }, 520);
+    }
+
+    function setMutedUi(m) {
+      video.muted = m;
+      soundBtn.textContent = m ? "🔇" : "🔊";
+    }
+
+    function unlockSound() {
+      setMutedUi(false);
+      video.play().catch(() => {});
+    }
+
+    // Any user gesture on the page unmutes (browser rule)
+    const gesture = () => {
+      unlockSound();
+      window.removeEventListener("pointerdown", gesture, true);
+      window.removeEventListener("keydown", gesture, true);
+      window.removeEventListener("touchstart", gesture, true);
+    };
+    window.addEventListener("pointerdown", gesture, true);
+    window.addEventListener("keydown", gesture, true);
+    window.addEventListener("touchstart", gesture, true);
+
+    skipBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeIntro();
+    });
+    soundBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setMutedUi(!video.muted);
+      video.play().catch(() => {});
+    });
+
+    if (!slow) {
+      video.loop = false;
+      video.addEventListener("ended", closeIntro);
+    } else {
+      video.loop = true;
+      slowTimer = setTimeout(closeIntro, 12000);
+    }
+
+    video.addEventListener("error", closeIntro);
+
+    // Prefer sound from the first frame
+    setMutedUi(false);
+    video.play().then(() => {
+      // success with sound (rare but possible)
+    }).catch(() => {
+      // Autoplay with sound blocked — start muted, unmute on any gesture
+      setMutedUi(true);
+      video.play().catch(() => {
+        // last resort: wait for gesture to both play and unmute
+        const startOnGesture = () => {
+          setMutedUi(false);
+          video.play().catch(() => {});
+        };
+        window.addEventListener("pointerdown", startOnGesture, { once: true, capture: true });
+      });
+    });
+
+    // safety: don't trap forever if video never starts
+    setTimeout(() => {
+      if (!closed && video.readyState < 2) closeIntro();
+    }, 10000);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mountIntro);
+  } else {
+    mountIntro();
+  }
+
 })();
