@@ -197,7 +197,6 @@ document.getElementById("pf-avatar-clear")?.addEventListener("click", () => {
 
 document.getElementById("pf-save")?.addEventListener("click", async () => {
   const data = collect();
-  // server avatar: only https URL (not huge data-url)
   const serverPayload = {
     displayName: data.name,
     bio: data.bio,
@@ -208,30 +207,55 @@ document.getElementById("pf-save")?.addEventListener("click", async () => {
         ? data.avatar
         : "",
   };
+
+  // always local first
   try {
-    if (window.FarsideAuth && FarsideAuth.token()) {
-      await fetch(
-        (window.FARSIDE_API ||
-          localStorage.getItem("farside-api") ||
-          "https://farside-api.onrender.com") + "/api/auth/profile",
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + FarsideAuth.token(),
-          },
-          credentials: "include",
-          body: JSON.stringify(serverPayload),
-        },
-      ).then(async (r) => {
-        if (!r.ok) throw new Error("save_failed");
-      });
-    }
     save(data);
   } catch (e) {
-    alert("Не удалось сохранить на сервер. Проверь вход и API.");
+    alert("Не хватило места в браузере.");
     return;
   }
+
+  // update session cache
+  try {
+    const sess = Object.assign({}, (window.FarsideAuth && FarsideAuth.session && FarsideAuth.session()) || {}, {
+      displayName: data.name,
+      nick: (window.FarsideAuth && FarsideAuth.session && FarsideAuth.session()?.nick) || data.name,
+      bio: data.bio,
+      spotify: data.spotify,
+      avatar: serverPayload.avatar,
+      favorites: data.favorites,
+    });
+    localStorage.setItem("farside-session-v1", JSON.stringify(sess));
+  } catch (_) {}
+
+  // server
+  try {
+    if (window.FarsideAuth && FarsideAuth.token && FarsideAuth.token()) {
+      if (FarsideAuth.api) {
+        await FarsideAuth.api("/api/auth/profile", {
+          method: "PATCH",
+          body: serverPayload,
+        });
+      } else {
+        await fetch(
+          (window.FARSIDE_API || "https://farside-hkic.onrender.com") +
+            "/api/auth/profile",
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + FarsideAuth.token(),
+            },
+            body: JSON.stringify(serverPayload),
+          },
+        );
+      }
+    }
+  } catch (e) {
+    console.warn("profile server save", e);
+  }
+
   renderPreview();
   if (statusEl) {
     statusEl.hidden = false;
@@ -317,10 +341,14 @@ applyForm(load());
     showLocked();
     return;
   }
+  // мгновенно из localStorage, потом уточняем с сервера
+  const cached = FarsideAuth.session && FarsideAuth.session();
+  if (cached && cached.nick) showApp(cached);
   try {
     const { user } = await FarsideAuth.me();
     showApp(user);
   } catch (_) {
-    showLocked();
+    if (!(cached && cached.nick)) showLocked();
   }
 })();
+

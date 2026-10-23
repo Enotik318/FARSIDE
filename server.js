@@ -20,26 +20,37 @@ const AUTH_SECRET =
 const IS_PROD = process.env.NODE_ENV === "production";
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
-  console.error("Нет SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET в .env");
+  console.error("Missing SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET");
   process.exit(1);
 }
 
 app.set("trust proxy", 1);
-const corsOrigin = (() => {
-  const o = process.env.FRONTEND_ORIGIN;
-  if (!o || o === "true" || o === "*") return true; // reflect request origin
-  return o.split(",").map((s) => s.trim()).filter(Boolean);
-})();
+
+// CORS: reflect request origin (never * with credentials)
+const allowList = (process.env.FRONTEND_ORIGIN || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 app.use(
   cors({
-    origin: corsOrigin,
+    origin(origin, cb) {
+      // allow no-origin (curl, same-origin tools) and any browser origin
+      // when allowList empty — reflect any origin (dev + local 5500 + GH pages)
+      if (!origin) return cb(null, true);
+      if (!allowList.length) return cb(null, true);
+      if (allowList.includes(origin)) return cb(null, true);
+      // always allow localhost for dev
+      if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin))
+        return cb(null, true);
+      return cb(null, false);
+    },
     credentials: true,
   }),
 );
-app.use(express.json({ limit: "32kb" }));
+app.use(express.json({ limit: "48kb" }));
 
-// ---------- genres / spotify (existing) ----------
+// ---------- genres / spotify ----------
 const genresPath = path.join(__dirname, "raw-genres.txt");
 const GENRES = fs.existsSync(genresPath)
   ? fs
@@ -49,7 +60,7 @@ const GENRES = fs.existsSync(genresPath)
       .filter(Boolean)
   : [];
 
-console.log(`Жанров: ${GENRES.length}`);
+console.log(`[farside] genres: ${GENRES.length}`);
 
 let cachedToken = null;
 let tokenExpiresAt = 0;
@@ -136,7 +147,7 @@ async function searchTracksByGenre(genre, limit = 12) {
 }
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, genres: GENRES.length });
+  res.json({ ok: true, genres: GENRES.length, auth: true, community: true });
 });
 
 app.get("/api/random", async (req, res) => {
@@ -155,47 +166,56 @@ app.get("/api/random", async (req, res) => {
   }
 });
 
-// ---------- AUTH ----------
-const USERS_PATH = path.join(__dirname, "data", "users.json");
+// ---------- storage ----------
+const DATA_DIR = path.join(__dirname, "data");
+const USERS_PATH = path.join(DATA_DIR, "users.json");
+const FEED_PATH = path.join(DATA_DIR, "feed.json");
 const BCRYPT_ROUNDS = 12;
 const TOKEN_DAYS = 14;
-const rateMap = new Map(); // ip -> { n, reset }
+const rateMap = new Map();
 
-function ensureUsersFile() {
-  const dir = path.dirname(USERS_PATH);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  if (!fs.existsSync(USERS_PATH)) {
-    fs.writeFileSync(USERS_PATH, "[]", "utf-8");
+function ensureData() {
+  if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  if (!fs.existsSync(USERS_PATH)) fs.writeFileSync(USERS_PATH, "[]", "utf-8");
+  if (!fs.existsSync(FEED_PATH)) fs.writeFileSync(FEED_PATH, "[]", "utf-8");
+}
+
+function readJSON(p, fallback) {
+  ensureData();
+  try {
+    const raw = JSON.parse(fs.readFileSync(p, "utf-8"));
+    return raw ?? fallback;
+  } catch {
+    return fallback;
   }
+}
+
+function writeJSON(p, data) {
+  ensureData();
+  const tmp = p + ".tmp";
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), "utf-8");
+  fs.renameSync(tmp, p);
 }
 
 function readUsers() {
-  ensureUsersFile();
-  try {
-    const raw = JSON.parse(fs.readFileSync(USERS_PATH, "utf-8"));
-    return Array.isArray(raw) ? raw : [];
-  } catch {
-    return [];
-  }
+  return readJSON(USERS_PATH, []);
 }
-
-function writeUsers(users) {
-  ensureUsersFile();
-  const tmp = USERS_PATH + ".tmp";
-  fs.writeFileSync(tmp, JSON.stringify(users, null, 2), "utf-8");
-  fs.renameSync(tmp, USERS_PATH);
+function writeUsers(u) {
+  writeJSON(USERS_PATH, u);
+}
+function readFeed() {
+  return readJSON(FEED_PATH, []);
+}
+function writeFeed(f) {
+  writeJSON(FEED_PATH, f);
 }
 
 function normalizeNick(n) {
-  return String(n || "")
-    .trim()
-    .toLowerCase();
+  return String(n || "").trim().toLowerCase();
 }
-
 function validNick(n) {
   return /^[a-zA-Z0-9_]{3,24}$/.test(n);
 }
-
 function validPass(p) {
   return typeof p === "string" && p.length >= 8 && p.length <= 72;
 }
@@ -240,10 +260,10 @@ function verifyToken(token) {
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/g, "");
-  const a = Buffer.from(sig);
-  const b = Buffer.from(expect);
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
   try {
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expect);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
     const payload = JSON.parse(
       Buffer.from(body.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString(),
     );
@@ -260,9 +280,7 @@ function parseCookies(req) {
   raw.split(";").forEach((p) => {
     const i = p.indexOf("=");
     if (i < 0) return;
-    const k = p.slice(0, i).trim();
-    const v = p.slice(i + 1).trim();
-    out[k] = decodeURIComponent(v);
+    out[p.slice(0, i).trim()] = decodeURIComponent(p.slice(i + 1).trim());
   });
   return out;
 }
@@ -273,7 +291,7 @@ function setSessionCookie(res, token) {
     `farside_session=${encodeURIComponent(token)}`,
     "Path=/",
     "HttpOnly",
-    "SameSite=None",
+    "SameSite=Lax",
     `Max-Age=${maxAge}`,
   ];
   if (IS_PROD) parts.push("Secure");
@@ -281,18 +299,12 @@ function setSessionCookie(res, token) {
 }
 
 function clearSessionCookie(res) {
-  const parts = [
-    "farside_session=",
-    "Path=/",
-    "HttpOnly",
-    "SameSite=None",
-    "Max-Age=0",
-  ];
+  const parts = ["farside_session=", "Path=/", "HttpOnly", "SameSite=Lax", "Max-Age=0"];
   if (IS_PROD) parts.push("Secure");
   res.setHeader("Set-Cookie", parts.join("; "));
 }
 
-function rateLimit(ip, limit = 20, windowMs = 15 * 60 * 1000) {
+function rateLimit(ip, limit = 30, windowMs = 15 * 60 * 1000) {
   const now = Date.now();
   let row = rateMap.get(ip);
   if (!row || now > row.reset) {
@@ -319,48 +331,36 @@ function publicUser(u) {
 function getUserFromReq(req) {
   const cookies = parseCookies(req);
   const bearer = (req.headers.authorization || "").replace(/^Bearer\s+/i, "");
-  const token = cookies.farside_session || bearer || "";
+  const token = bearer || cookies.farside_session || "";
   const payload = verifyToken(token);
   if (!payload || !payload.sub) return null;
-  const users = readUsers();
-  return users.find((u) => u.id === payload.sub) || null;
+  return readUsers().find((u) => u.id === payload.sub) || null;
 }
 
+// ---------- AUTH ----------
 app.post("/api/auth/register", async (req, res) => {
-  const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
-  if (!rateLimit(String(ip), 10)) {
-    return res.status(429).json({ error: "too_many_requests" });
-  }
+  const ip = String(req.ip || req.headers["x-forwarded-for"] || "x");
+  if (!rateLimit(ip, 12)) return res.status(429).json({ error: "too_many_requests", message: "Слишком много попыток" });
 
   const nickRaw = String(req.body?.nick || "").trim();
   const password = String(req.body?.password || "");
   const displayName = String(req.body?.displayName || nickRaw).trim().slice(0, 24);
 
-  if (!validNick(nickRaw)) {
-    return res.status(400).json({
-      error: "bad_nick",
-      message: "Ник: 3–24 символа, латиница, цифры, _",
-    });
-  }
-  if (!validPass(password)) {
-    return res.status(400).json({
-      error: "bad_password",
-      message: "Пароль от 8 до 72 символов",
-    });
-  }
+  if (!validNick(nickRaw))
+    return res.status(400).json({ error: "bad_nick", message: "Ник: 3–24, латиница, цифры, _" });
+  if (!validPass(password))
+    return res.status(400).json({ error: "bad_password", message: "Пароль от 8 до 72 символов" });
 
   const nick = normalizeNick(nickRaw);
   const users = readUsers();
-  if (users.some((u) => u.nick === nick)) {
+  if (users.some((u) => u.nick === nick))
     return res.status(409).json({ error: "nick_taken", message: "Ник занят" });
-  }
 
-  const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
   const user = {
     id: crypto.randomUUID(),
     nick,
     displayName: displayName || nickRaw,
-    passwordHash,
+    passwordHash: await bcrypt.hash(password, BCRYPT_ROUNDS),
     bio: "",
     spotify: "",
     avatar: "",
@@ -376,28 +376,18 @@ app.post("/api/auth/register", async (req, res) => {
 });
 
 app.post("/api/auth/login", async (req, res) => {
-  const ip = req.ip || req.headers["x-forwarded-for"] || "unknown";
-  if (!rateLimit(String(ip), 20)) {
-    return res.status(429).json({ error: "too_many_requests" });
-  }
+  const ip = String(req.ip || req.headers["x-forwarded-for"] || "x");
+  if (!rateLimit(ip, 25)) return res.status(429).json({ error: "too_many_requests", message: "Слишком много попыток" });
 
   const nick = normalizeNick(req.body?.nick);
   const password = String(req.body?.password || "");
-  if (!nick || !password) {
+  if (!nick || !password)
     return res.status(400).json({ error: "missing", message: "Введи ник и пароль" });
-  }
 
-  const users = readUsers();
-  const user = users.find((u) => u.nick === nick);
-  // constant-ish fail
-  const ok =
-    user && (await bcrypt.compare(password, user.passwordHash || ""));
-  if (!ok) {
-    return res.status(401).json({
-      error: "invalid_credentials",
-      message: "Неверный ник или пароль",
-    });
-  }
+  const user = readUsers().find((u) => u.nick === nick);
+  const ok = user && (await bcrypt.compare(password, user.passwordHash || ""));
+  if (!ok)
+    return res.status(401).json({ error: "invalid_credentials", message: "Неверный ник или пароль" });
 
   const token = signToken({ sub: user.id, nick: user.nick });
   setSessionCookie(res, token);
@@ -415,30 +405,21 @@ app.get("/api/auth/me", (req, res) => {
   res.json({ user: publicUser(user) });
 });
 
-app.patch("/api/auth/profile", async (req, res) => {
+app.patch("/api/auth/profile", (req, res) => {
   const user = getUserFromReq(req);
   if (!user) return res.status(401).json({ error: "unauthorized" });
-
   const users = readUsers();
   const idx = users.findIndex((u) => u.id === user.id);
   if (idx < 0) return res.status(401).json({ error: "unauthorized" });
-
   const body = req.body || {};
-  if (typeof body.displayName === "string") {
+  if (typeof body.displayName === "string")
     users[idx].displayName = body.displayName.trim().slice(0, 24);
-  }
-  if (typeof body.bio === "string") {
-    users[idx].bio = body.bio.trim().slice(0, 160);
-  }
-  if (typeof body.spotify === "string") {
+  if (typeof body.bio === "string") users[idx].bio = body.bio.trim().slice(0, 160);
+  if (typeof body.spotify === "string")
     users[idx].spotify = body.spotify.trim().slice(0, 200);
-  }
   if (typeof body.avatar === "string") {
-    // allow URL only on server profile (no huge data URLs in file store)
     const a = body.avatar.trim().slice(0, 300);
-    if (!a || a.startsWith("https://") || a.startsWith("http://")) {
-      users[idx].avatar = a;
-    }
+    if (!a || a.startsWith("https://") || a.startsWith("http://")) users[idx].avatar = a;
   }
   if (Array.isArray(body.favorites)) {
     users[idx].favorites = body.favorites
@@ -446,16 +427,105 @@ app.patch("/api/auth/profile", async (req, res) => {
       .filter(Boolean)
       .slice(0, 8);
   }
-
   writeUsers(users);
   res.json({ user: publicUser(users[idx]) });
 });
 
-app.listen(PORT, () => {
-  console.log(`FARSIDE server http://127.0.0.1:${PORT}`);
-  if (!process.env.AUTH_SECRET) {
-    console.warn(
-      "WARN: AUTH_SECRET не задан — сессии сбросятся после рестарта. Добавь AUTH_SECRET в .env",
+// ---------- COMMUNITY ----------
+app.get("/api/community/members", (_req, res) => {
+  const users = readUsers()
+    .slice()
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .slice(0, 60)
+    .map(publicUser);
+  res.json({ members: users, total: readUsers().length });
+});
+
+app.get("/api/community/feed", (_req, res) => {
+  const feed = readFeed().slice(0, 80);
+  res.json({ posts: feed });
+});
+
+app.post("/api/community/post", (req, res) => {
+  const user = getUserFromReq(req);
+  if (!user) return res.status(401).json({ error: "unauthorized", message: "Нужен вход" });
+  const ip = String(req.ip || "x");
+  if (!rateLimit("post:" + ip, 40, 60 * 60 * 1000))
+    return res.status(429).json({ error: "too_many_requests", message: "Подожди немного" });
+
+  const text = String(req.body?.text || "").trim().slice(0, 280);
+  const genre = String(req.body?.genre || "").trim().slice(0, 64);
+  if (text.length < 2)
+    return res.status(400).json({ error: "empty", message: "Напиши хотя бы пару символов" });
+
+  const post = {
+    id: crypto.randomUUID(),
+    text,
+    genre: genre || null,
+    author: {
+      nick: user.nick,
+      displayName: user.displayName || user.nick,
+      avatar: user.avatar || "",
+    },
+    createdAt: Date.now(),
+  };
+  const feed = readFeed();
+  feed.unshift(post);
+  writeFeed(feed.slice(0, 200));
+  res.status(201).json({ post });
+});
+
+// ---------- WIKI (genre meta from genres.json if present) ----------
+let GENRES_META = null;
+function loadMeta() {
+  if (GENRES_META) return GENRES_META;
+  const p = path.join(__dirname, "genres.json");
+  if (fs.existsSync(p)) {
+    try {
+      GENRES_META = JSON.parse(fs.readFileSync(p, "utf-8"));
+    } catch {
+      GENRES_META = {};
+    }
+  } else GENRES_META = {};
+  return GENRES_META;
+}
+
+app.get("/api/wiki/search", (req, res) => {
+  const q = String(req.query.q || "").trim().toLowerCase();
+  const meta = loadMeta();
+  let list = Object.values(meta);
+  if (!list.length) {
+    list = GENRES.slice(0, 500).map((name) => ({ name, family: "other" }));
+  }
+  if (q) {
+    list = list.filter(
+      (g) =>
+        (g.name || "").toLowerCase().includes(q) ||
+        (g.family || "").toLowerCase().includes(q) ||
+        (g.blurb || "").toLowerCase().includes(q),
     );
   }
+  list = list.slice(0, 40);
+  res.json({ results: list });
+});
+
+app.get("/api/wiki/:name", (req, res) => {
+  const name = decodeURIComponent(req.params.name || "");
+  const meta = loadMeta();
+  const key = name.toLowerCase();
+  let g =
+    meta[key] ||
+    Object.values(meta).find((x) => (x.name || "").toLowerCase() === key);
+  if (!g) {
+    const hit = GENRES.find((n) => n.toLowerCase() === key);
+    if (!hit) return res.status(404).json({ error: "not_found" });
+    g = { name: hit, family: "other", blurb: "" };
+  }
+  res.json({ genre: g });
+});
+
+app.listen(PORT, () => {
+  console.log(`[farside] http://127.0.0.1:${PORT}`);
+  if (!process.env.AUTH_SECRET)
+    console.warn("[farside] WARN: set AUTH_SECRET in env");
 });

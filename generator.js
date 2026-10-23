@@ -1,6 +1,7 @@
+const FARSIDE_API_BASE = (window.FARSIDE_API || localStorage.getItem("farside-api") || "https://farside-hkic.onrender.com").replace(/\/$/, "");
 
-const API_URL = "https://farside-hkic.onrender.com/api/random";
-const API_HEALTH = "https://farside-hkic.onrender.com/api/health";
+const API_URL = FARSIDE_API_BASE + "/api/random";
+const API_HEALTH = FARSIDE_API_BASE + "/api/health";
 const CACHE_KEY = "farside-api-cache-v2";
 const CACHE_TTL = 8 * 60 * 1000;
 const FILTER_KEY = "farside-filter";
@@ -161,29 +162,64 @@ function renderHistory() {
 
 
 async function loadGenres() {
-  if (allGenres) return allGenres;
-  try {
-    const res = await fetch("genres.txt");
-    const text = await res.text();
-    allGenres = text.split("\n").map((s) => s.trim()).filter(Boolean);
-  } catch {
-    allGenres = [];
+  if (allGenres && allGenres.length) return allGenres;
+
+  function looksLikeHtml(s) {
+    const t = String(s || "").trim().toLowerCase();
+    return (
+      t.startsWith("<!doctype") ||
+      t.startsWith("<html") ||
+      t.startsWith("<head") ||
+      t.startsWith("<body") ||
+      t.includes("</html>") ||
+      t.startsWith("<!--")
+    );
   }
-  if (!allGenres.length) {
-    try {
-      const res = await fetch("genres.json");
+
+  function cleanList(list) {
+    return (list || [])
+      .map((s) => String(s).trim())
+      .filter(Boolean)
+      .filter((s) => !looksLikeHtml(s))
+      .filter((s) => !s.startsWith("<") && !s.startsWith("{"))
+      .filter((s) => s.length < 80);
+  }
+
+  // 1) genres.json — reliable
+  try {
+    const res = await fetch("genres.json");
+    if (res.ok) {
       const data = await res.json();
-      allGenres = Object.keys(data);
-      genresMeta = data;
-    } catch {
-      allGenres = ["indie", "techno", "lo-fi", "synthwave"];
+      if (data && typeof data === "object") {
+        genresMeta = data;
+        allGenres = cleanList(
+          Array.isArray(data) ? data : Object.values(data).map((v) => v.name || v),
+        );
+        // also keys if values have no name
+        if (!allGenres.length) allGenres = cleanList(Object.keys(data));
+      }
     }
+  } catch (_) {}
+
+  // 2) genres.txt fallback
+  if (!allGenres || !allGenres.length) {
+    try {
+      const res = await fetch("genres.txt");
+      const text = await res.text();
+      if (!looksLikeHtml(text)) {
+        allGenres = cleanList(text.split("\n"));
+      }
+    } catch (_) {}
+  }
+
+  if (!allGenres || !allGenres.length) {
+    allGenres = ["indie", "techno", "lo-fi", "synthwave", "jazz", "ambient"];
   }
   return allGenres;
 }
 
 async function loadMeta() {
-  if (genresMeta) return genresMeta;
+  if (genresMeta && Object.keys(genresMeta).length) return genresMeta;
   try {
     const res = await fetch("genres.json");
     genresMeta = res.ok ? await res.json() : {};
@@ -484,7 +520,13 @@ function renderTracks(data, genre) {
   if (trLabel) trLabel.textContent = genre || "—";
   if (!trList) return;
   trList.innerHTML = "";
-  const tracks = (data && Array.isArray(data.tracks) ? data.tracks : []).filter(Boolean);
+  let tracks = [];
+  if (data) {
+    if (Array.isArray(data.tracks)) tracks = data.tracks;
+    else if (data.data && Array.isArray(data.data.tracks)) tracks = data.data.tracks;
+    else if (Array.isArray(data)) tracks = data;
+  }
+  tracks = tracks.filter(Boolean);
 
   if (!tracks.length) {
     if (trEmpty) trEmpty.hidden = false;
@@ -593,6 +635,7 @@ async function generate() {
     renderResult(genre);
     renderPlaylists((data && data.playlists) || [], genre, !data);
     renderTracks(data, genre);
+    await logLine("tracks · " + ((data && data.tracks) || []).filter(Boolean).length);
     pushHistory(genre);
     await logLine("done");
   } catch (err) {
