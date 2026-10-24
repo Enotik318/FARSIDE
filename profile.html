@@ -1,155 +1,163 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Профиль — FARSIDE</title>
-  <meta name="description" content="Локальный профиль FARSIDE" />
-  <meta name="theme-color" content="#070708" />
+  <meta name="description" content="Профиль паписика FARSIDE" />
+  <meta name="theme-color" content="#0a0a0a" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <script>
+    (function () {
+      var t = localStorage.getItem("farside-theme") || "dark";
+      var l = localStorage.getItem("farside-lang") || "ru";
+      document.documentElement.setAttribute("data-theme", t);
+      document.documentElement.setAttribute("lang", l);
+    })();
+  </script>
 </head>
 <body>
   <div class="video-backdrop" aria-hidden="true">
-    <video id="bg-video" autoplay muted loop playsinline preload="auto" poster="media/horizon-poster.jpg">
+    <video id="bg-video" autoplay muted loop playsinline preload="auto">
       <source src="media/mainfon.mp4" type="video/mp4" />
     </video>
     <div class="video-vignette"></div>
     <div class="video-scrim"></div>
   </div>
 
-  <div class="nav-shell">
-    <a class="skip-link" href="#content">К содержанию</a>
-    <div class="icon-rail">
-      <div class="rail-logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="3.5" ry="8"/><path d="M4 12h16"/>
-        </svg>
-      </div>
-      <button type="button" class="burger-btn" id="burger" aria-expanded="false" aria-controls="nav-panel" aria-label="Открыть меню">
-        <span class="burger-icon" id="burger-icon"><span></span><span></span></span>
-      </button>
-      <div class="rail-spacer"></div>
-      <span class="rail-brand">FARSIDE</span>
-    </div>
-    <div class="mobile-topbar"><span>FARSIDE</span></div>
-    <div class="nav-overlay" id="nav-overlay" aria-hidden="true"></div>
-    <aside class="nav-panel" id="nav-panel" role="dialog" aria-modal="true" aria-label="Навигация">
-      <div class="nav-panel-head">
-        <div class="nav-panel-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-          <span data-i18n="nav.menu">Меню</span>
-        </div>
-        <button type="button" class="nav-close" id="nav-close" aria-label="Закрыть">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="nav-scroll">
-        <div class="nav-section">
-          <p class="nav-section-label" data-i18n="nav.section">Навигация</p>
-          <ul class="nav-items">
-            <li><a href="index.html"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-text" data-i18n="nav.home">Главная</span><span class="nav-count">01</span></a></li>
-            <li><a href="generator.html"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span><span class="nav-text" data-i18n="nav.generator">Генератор</span><span class="nav-count">02</span></a></li>
-            <li><a href="tree.html"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3v18"/><path d="M8 7h8"/><path d="M6 12h12"/><path d="M4 17h16"/></svg></span><span class="nav-text" data-i18n="nav.tree">Дерево</span><span class="nav-count">03</span></a></li>
-            <li><a href="about.html"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span><span class="nav-text" data-i18n="nav.manifesto">Манифест</span><span class="nav-count">04</span></a></li>
-            <li><a href="profile.html" class="is-active" aria-current="page"><span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-text" data-i18n="nav.profile">Профиль</span><span class="nav-count">05</span></a></li>
-          </ul>
-        </div>
-      </div>
-      <p class="nav-footer" data-i18n="nav.footer">Случайный жанр за горизонтом привычного звука.</p>
-    </aside>
-  </div>
-
   <main class="stage profile-stage" id="content">
-    <p class="kicker hero-enter">Вы</p>
-    <h1 class="headline hero-enter hero-enter-1" style="font-size:clamp(2.2rem,5vw,3.2rem)">Профиль</h1>
-    <p class="profile-note hero-enter hero-enter-1">Профиль только для зарегистрированных подписчиков (паписиков).</p>
-    <div class="profile-auth-bar hero-enter hero-enter-1" id="pf-top-bar">
-      <button type="button" class="btn btn-ghost" id="pf-logout" hidden>Выйти</button>
-      <span class="profile-account-label" id="pf-account-label"></span>
-    </div>
+    <header class="pf-hero">
+      <p class="kicker">SIGNAL ID</p>
+      <h1 class="headline">Профиль</h1>
+      <div class="set-status-row">
+        <div class="set-chip" id="pf-chip-user">Гость</div>
+        <div class="set-chip" id="pf-chip-favs">Жанры · 0</div>
+        <div class="set-chip" id="pf-chip-hist">История · 0</div>
+      </div>
+      <div class="set-actions" style="margin-top:.75rem">
+        <button type="button" class="btn btn-primary" data-open-auth="register" id="pf-btn-reg">Регистрация</button>
+        <button type="button" class="btn btn-ghost" data-open-auth="login" id="pf-btn-login">Вход</button>
+        <button type="button" class="btn btn-ghost" id="pf-logout" hidden>Выйти</button>
+      </div>
+    </header>
 
-    <div class="profile-gate hero-enter hero-enter-2" id="profile-locked">
-      <div class="profile-card profile-gate-card">
-        <h2>Сначала аккаунт паписика</h2>
-        <p>Без регистрации профиль не заполняется — так данные не потеряются и будут только твои.</p>
-        <div class="profile-auth-bar" style="margin:0">
-          <button type="button" class="btn btn-primary" data-open-auth="register">Регистрация</button>
-          <button type="button" class="btn btn-ghost" data-open-auth="login">Вход</button>
+    <!-- locked -->
+    <section class="set-card pf-locked" id="profile-locked">
+      <div class="pf-locked-inner">
+        <div class="pf-locked-mark">◎</div>
+        <h2>Нужен аккаунт паписика</h2>
+        <p class="set-hint">Без входа профиль не редактируется. Зарегистрируйся — имя, био, любимые жанры и аватар сохранятся.</p>
+        <div class="set-actions">
+          <button type="button" class="btn btn-primary" data-open-auth="register">Создать аккаунт</button>
+          <button type="button" class="btn btn-ghost" data-open-auth="login">Уже есть</button>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="profile-layout hero-enter hero-enter-2" id="profile-app" hidden>
-
-      <section class="profile-card profile-hero-card">
-        <div class="profile-avatar-wrap">
-          <div class="profile-avatar" id="pf-avatar" aria-hidden="true">?</div>
-        </div>
-        <div class="profile-hero-text">
-          <h2 id="pf-preview-name">Без имени</h2>
-          <p id="pf-preview-bio" class="profile-bio-preview">Расскажи, кто ты в эфире.</p>
-        </div>
-      </section>
-
-      <section class="profile-card">
-        <h3 class="profile-section-title">Данные</h3>
-        <div class="profile-field">
-          <span>Аватар</span>
-          <div class="profile-avatar-controls">
-            <label class="profile-file-btn">
-              Выбрать фото
-              <input type="file" id="pf-avatar-file" accept="image/*" hidden />
-            </label>
-            <button type="button" class="btn btn-ghost" id="pf-avatar-clear">Убрать</button>
+    <!-- app -->
+    <div id="profile-app" hidden>
+      <div class="pf-grid">
+        <!-- identity card -->
+        <section class="set-card pf-id-card">
+          <div class="pf-id-top">
+            <div class="pf-avatar" id="pf-avatar-view" aria-hidden="true">?</div>
+            <div class="pf-id-meta">
+              <p class="kicker" id="pf-account-label">@—</p>
+              <h2 id="pf-preview-name">Без имени</h2>
+              <p class="set-hint" id="pf-preview-bio">Расскажи, кто ты в эфире.</p>
+            </div>
           </div>
-          <input type="url" id="pf-avatar-url" placeholder="или ссылка на картинку https://…" />
-          <p class="profile-hint" style="margin-top:.35rem">Фото хранится только в этом браузере (сжимаем до ~200KB).</p>
-        </div>
-        <label class="profile-field">
-          <span>Ник</span>
-          <input type="text" id="pf-name" maxlength="24" placeholder="например, farwalker" autocomplete="nickname" />
-        </label>
-        <label class="profile-field">
-          <span>О себе</span>
-          <textarea id="pf-bio" maxlength="160" rows="3" placeholder="Люблю странные жанры и ночной эфир…"></textarea>
-        </label>
-        <label class="profile-field">
-          <span>Spotify (ссылка, необязательно)</span>
-          <input type="url" id="pf-spotify" placeholder="https://open.spotify.com/user/…" />
-        </label>
-        <div class="profile-actions">
-          <button type="button" class="btn btn-primary" id="pf-save">Сохранить</button>
-          <button type="button" class="btn btn-ghost" id="pf-reset">Сбросить</button>
-          <span class="profile-save-status" id="pf-status" hidden>Сохранено</span>
-        </div>
-      </section>
+          <div class="pf-id-stats">
+            <div><b id="pf-stat-favs">0</b><span>любимых</span></div>
+            <div><b id="pf-stat-hist">0</b><span>в истории</span></div>
+            <div><b id="pf-stat-planet">—</b><span>планета</span></div>
+          </div>
+        </section>
 
-      <section class="profile-card">
-        <h3 class="profile-section-title">Любимые жанры</h3>
-        <p class="profile-hint">До 8 штук. Добавь вручную или из истории генератора.</p>
-        <div class="profile-fav-row">
-          <input type="text" id="pf-fav-input" maxlength="48" placeholder="жанр…" />
-          <button type="button" class="btn btn-ghost" id="pf-fav-add">Добавить</button>
-        </div>
-        <ul class="profile-fav-list" id="pf-fav-list"></ul>
-        <button type="button" class="btn btn-ghost profile-from-history" id="pf-from-history">Подтянуть из истории генератора</button>
-      </section>
+        <!-- edit -->
+        <section class="set-card">
+          <div class="set-card-head">
+            <span class="set-idx">01</span>
+            <div>
+              <h2>Идентичность</h2>
+              <p>Имя, био, ссылка Spotify.</p>
+            </div>
+          </div>
+          <div class="pf-fields">
+            <label class="pf-field">
+              <span>Отображаемое имя</span>
+              <input id="pf-name" maxlength="24" placeholder="как тебя слышно" />
+            </label>
+            <label class="pf-field">
+              <span>О себе</span>
+              <textarea id="pf-bio" rows="3" maxlength="160" placeholder="коротко про вкус и орбиту"></textarea>
+            </label>
+            <label class="pf-field">
+              <span>Spotify</span>
+              <input id="pf-spotify" type="url" placeholder="https://open.spotify.com/user/…" />
+            </label>
+          </div>
+        </section>
 
-      <section class="profile-card">
-        <h3 class="profile-section-title">Система</h3>
-        <p class="profile-hint">Тема, язык и фон — в настройках.</p>
-        <a class="btn btn-primary" href="settings.html">Открыть настройки</a>
-      </section>
-    </div>
+        <!-- avatar -->
+        <section class="set-card">
+          <div class="set-card-head">
+            <span class="set-idx">02</span>
+            <div>
+              <h2>Аватар</h2>
+              <p>URL картинки или файл с устройства.</p>
+            </div>
+          </div>
+          <label class="pf-field">
+            <span>URL</span>
+            <input id="pf-avatar-url" type="url" placeholder="https://…" />
+          </label>
+          <label class="pf-field">
+            <span>Файл</span>
+            <input id="pf-avatar-file" type="file" accept="image/*" />
+          </label>
+          <input type="hidden" id="pf-avatar" />
+          <p class="set-hint">На сервер уходит только https-ссылка. Файл остаётся в этом браузере.</p>
+        </section>
+
+        <!-- favorites -->
+        <section class="set-card set-card-wide">
+          <div class="set-card-head">
+            <span class="set-idx">03</span>
+            <div>
+              <h2>Любимые жанры</h2>
+              <p>До 8 штук. Можно подтянуть из истории генератора.</p>
+            </div>
+          </div>
+          <div class="set-actions">
+            <input id="pf-fav-input" class="pf-inline-input" placeholder="например: uk garage" />
+            <button type="button" class="btn btn-primary" id="pf-fav-add">Добавить</button>
+            <button type="button" class="btn btn-ghost" id="pf-from-history">Из истории</button>
+          </div>
+          <div class="pf-fav-cloud" id="pf-fav-list"></div>
+        </section>
+
+        <!-- actions -->
+        <section class="set-card set-card-wide pf-save-bar">
+          <div class="set-actions">
+            <button type="button" class="btn btn-primary" id="pf-save">Сохранить профиль</button>
+            <button type="button" class="btn btn-ghost" id="pf-reset">Сбросить локально</button>
+            <a class="btn btn-ghost" href="settings.html">Настройки сайта</a>
+            <a class="btn btn-ghost" href="generator.html">В генератор</a>
+            <span class="set-hint" id="pf-status" hidden>✓ сохранено</span>
+          </div>
+        </section>
+      </div>
     </div>
   </main>
 
   <script src="config.js"></script>
   <script src="app.js"></script>
+  <script src="nav-top.js"></script>
   <script src="mars.js"></script>
   <script src="auth.js"></script>
   <script src="profile.js"></script>

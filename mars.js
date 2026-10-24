@@ -6,13 +6,15 @@
     luna: "media/fonLuna.mp4",
     neptune: "media/neptyn.mp4",
     saturn: "media/satyrn.mp4",
+    venus: "media/venera.mp4",
+    atmos: "media/atmos.mp4",
   };
   const DEFAULTS = {
     source: "mars",
-    brightness: 52,
-    contrast: 115,
-    saturate: 0,
-    grayscale: 100,
+    brightness: 100,
+    contrast: 100,
+    saturate: 100,
+    grayscale: 0,
     opacity: 100,
   };
 

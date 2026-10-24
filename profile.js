@@ -1,354 +1,343 @@
 
-const KEY = "farside-profile-v1";
-const HISTORY_KEY = "farside-genre-history";
-const MAX_AVATAR_BYTES = 220000;
+(function () {
+  const KEY = "farside-profile-v1";
+  const HISTORY_KEY = "farside-genre-history";
+  const MAX_AVATAR = 220000;
 
-const nameEl = document.getElementById("pf-name");
-const bioEl = document.getElementById("pf-bio");
-const spotifyEl = document.getElementById("pf-spotify");
-const avatarEl = document.getElementById("pf-avatar");
-const avatarFile = document.getElementById("pf-avatar-file");
-const avatarUrl = document.getElementById("pf-avatar-url");
-const previewName = document.getElementById("pf-preview-name");
-const previewBio = document.getElementById("pf-preview-bio");
-const favList = document.getElementById("pf-fav-list");
-const favInput = document.getElementById("pf-fav-input");
-const statusEl = document.getElementById("pf-status");
-
-let favorites = [];
-let avatarData = ""; // data URL or remote URL
-
-function load() {
-  try {
-    return JSON.parse(localStorage.getItem(KEY) || "null") || {};
-  } catch {
-    return {};
-  }
-}
-
-function save(data) {
-  localStorage.setItem(KEY, JSON.stringify(data));
-}
-
-function initial(name) {
-  const t = (name || "").trim();
-  return t ? t[0].toUpperCase() : "?";
-}
-
-function renderAvatar() {
-  if (!avatarEl) return;
-  if (avatarData) {
-    avatarEl.textContent = "";
-    avatarEl.style.backgroundImage = "url(" + JSON.stringify(String(avatarData)) + ")";
-    avatarEl.classList.add("has-image");
-  } else {
-    avatarEl.style.backgroundImage = "";
-    avatarEl.classList.remove("has-image");
-    avatarEl.textContent = initial(nameEl && nameEl.value);
-  }
-}
-
-function renderPreview() {
-  const name = (nameEl.value || "").trim();
-  const bio = (bioEl.value || "").trim();
-  previewName.textContent = name || "Без имени";
-  previewBio.textContent = bio || "Расскажи, кто ты в эфире.";
-  renderAvatar();
-}
-
-function renderFavs() {
-  if (!favList) return;
-  if (!favorites.length) {
-    favList.innerHTML = '<li class="profile-fav-empty">Пока пусто</li>';
-    return;
-  }
-  favList.innerHTML = favorites
-    .map(
-      (g, i) =>
-        '<li><span>' +
-        String(g).replace(/</g, "&lt;") +
-        '</span><button type="button" data-i="' +
-        i +
-        '" aria-label="Удалить">×</button></li>',
-    )
-    .join("");
-  favList.querySelectorAll("button[data-i]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const i = Number(btn.getAttribute("data-i"));
-      favorites.splice(i, 1);
-      renderFavs();
-    });
-  });
-}
-
-function addFav(raw) {
-  const g = String(raw || "").trim();
-  if (!g) return;
-  const low = g.toLowerCase();
-  if (favorites.some((x) => x.toLowerCase() === low)) return;
-  favorites.unshift(g);
-  favorites = favorites.slice(0, 8);
-  renderFavs();
-  if (favInput) favInput.value = "";
-}
-
-function applyForm(data) {
-  nameEl.value = data.name || "";
-  bioEl.value = data.bio || "";
-  spotifyEl.value = data.spotify || "";
-  avatarData = data.avatar || "";
-  if (avatarUrl) {
-    avatarUrl.value =
-      avatarData && !String(avatarData).startsWith("data:") ? avatarData : "";
-  }
-  favorites = Array.isArray(data.favorites) ? data.favorites.slice(0, 8) : [];
-  renderPreview();
-  renderFavs();
-}
-
-function collect() {
-  let avatar = avatarData || "";
-  // prefer explicit URL field if user typed one and no file data
-  const urlVal = (avatarUrl && avatarUrl.value || "").trim();
-  if (urlVal && (urlVal.startsWith("http://") || urlVal.startsWith("https://"))) {
-    if (!avatar || !String(avatar).startsWith("data:")) avatar = urlVal;
-  }
-  return {
-    name: (nameEl.value || "").trim().slice(0, 24),
-    bio: (bioEl.value || "").trim().slice(0, 160),
-    spotify: (spotifyEl.value || "").trim().slice(0, 200),
-    avatar: avatar,
-    favorites: favorites.slice(0, 8),
-    updatedAt: Date.now(),
-  };
-}
-
-function compressImage(file) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const max = 256;
-      let w = img.width;
-      let h = img.height;
-      if (w > h && w > max) {
-        h = Math.round((h * max) / w);
-        w = max;
-      } else if (h >= w && h > max) {
-        w = Math.round((w * max) / h);
-        h = max;
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, w, h);
-      let quality = 0.85;
-      let data = canvas.toDataURL("image/jpeg", quality);
-      while (data.length > MAX_AVATAR_BYTES && quality > 0.4) {
-        quality -= 0.1;
-        data = canvas.toDataURL("image/jpeg", quality);
-      }
-      if (data.length > MAX_AVATAR_BYTES * 1.4) {
-        reject(new Error("too large"));
-        return;
-      }
-      resolve(data);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("load fail"));
-    };
-    img.src = url;
-  });
-}
-
-avatarFile?.addEventListener("change", async () => {
-  const file = avatarFile.files && avatarFile.files[0];
-  if (!file) return;
-  if (!file.type.startsWith("image/")) {
-    alert("Нужен файл изображения");
-    return;
-  }
-  try {
-    avatarData = await compressImage(file);
-    if (avatarUrl) avatarUrl.value = "";
-    renderAvatar();
-  } catch (e) {
-    alert("Не удалось обработать фото. Попробуй меньше размер.");
-  }
-  avatarFile.value = "";
-});
-
-avatarUrl?.addEventListener("change", () => {
-  const v = (avatarUrl.value || "").trim();
-  if (v.startsWith("http://") || v.startsWith("https://")) {
-    avatarData = v;
-    renderAvatar();
-  }
-});
-
-document.getElementById("pf-avatar-clear")?.addEventListener("click", () => {
-  avatarData = "";
-  if (avatarUrl) avatarUrl.value = "";
-  renderAvatar();
-});
-
-document.getElementById("pf-save")?.addEventListener("click", async () => {
-  const data = collect();
-  const serverPayload = {
-    displayName: data.name,
-    bio: data.bio,
-    spotify: data.spotify,
-    favorites: data.favorites,
-    avatar:
-      data.avatar && String(data.avatar).startsWith("http")
-        ? data.avatar
-        : "",
-  };
-
-  // always local first
-  try {
-    save(data);
-  } catch (e) {
-    alert("Не хватило места в браузере.");
-    return;
-  }
-
-  // update session cache
-  try {
-    const sess = Object.assign({}, (window.FarsideAuth && FarsideAuth.session && FarsideAuth.session()) || {}, {
-      displayName: data.name,
-      nick: (window.FarsideAuth && FarsideAuth.session && FarsideAuth.session()?.nick) || data.name,
-      bio: data.bio,
-      spotify: data.spotify,
-      avatar: serverPayload.avatar,
-      favorites: data.favorites,
-    });
-    localStorage.setItem("farside-session-v1", JSON.stringify(sess));
-  } catch (_) {}
-
-  // server
-  try {
-    if (window.FarsideAuth && FarsideAuth.token && FarsideAuth.token()) {
-      if (FarsideAuth.api) {
-        await FarsideAuth.api("/api/auth/profile", {
-          method: "PATCH",
-          body: serverPayload,
-        });
-      } else {
-        await fetch(
-          (window.FARSIDE_API || "https://farside-hkic.onrender.com") +
-            "/api/auth/profile",
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + FarsideAuth.token(),
-            },
-            body: JSON.stringify(serverPayload),
-          },
-        );
-      }
-    }
-  } catch (e) {
-    console.warn("profile server save", e);
-  }
-
-  renderPreview();
-  if (statusEl) {
-    statusEl.hidden = false;
-    setTimeout(() => {
-      statusEl.hidden = true;
-    }, 1600);
-  }
-});
-
-document.getElementById("pf-reset")?.addEventListener("click", () => {
-  if (!confirm("Сбросить локальный профиль?")) return;
-  localStorage.removeItem(KEY);
-  avatarData = "";
-  applyForm({});
-});
-
-document.getElementById("pf-fav-add")?.addEventListener("click", () => {
-  addFav(favInput && favInput.value);
-});
-
-favInput?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    addFav(favInput.value);
-  }
-});
-
-document.getElementById("pf-from-history")?.addEventListener("click", () => {
-  try {
-    const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
-    if (!Array.isArray(hist) || !hist.length) {
-      alert("История генератора пуста — сначала поймай жанры.");
-      return;
-    }
-    hist.slice(0, 8).forEach((g) => addFav(g));
-  } catch {
-    alert("Не удалось прочитать историю.");
-  }
-});
-
-nameEl?.addEventListener("input", renderPreview);
-bioEl?.addEventListener("input", renderPreview);
-
-applyForm(load());
-
-
-// account gate — no edit without login
-(async function accountGate() {
+  const nameEl = document.getElementById("pf-name");
+  const bioEl = document.getElementById("pf-bio");
+  const spotifyEl = document.getElementById("pf-spotify");
+  const avatarHidden = document.getElementById("pf-avatar");
+  const avatarUrl = document.getElementById("pf-avatar-url");
+  const avatarFile = document.getElementById("pf-avatar-file");
+  const avatarView = document.getElementById("pf-avatar-view");
+  const previewName = document.getElementById("pf-preview-name");
+  const previewBio = document.getElementById("pf-preview-bio");
+  const favList = document.getElementById("pf-fav-list");
+  const favInput = document.getElementById("pf-fav-input");
+  const statusEl = document.getElementById("pf-status");
   const locked = document.getElementById("profile-locked");
   const app = document.getElementById("profile-app");
   const label = document.getElementById("pf-account-label");
   const logoutBtn = document.getElementById("pf-logout");
+
+  let favorites = [];
+  let avatarData = "";
+
+  function loadLocal() {
+    try {
+      return JSON.parse(localStorage.getItem(KEY) || "null") || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveLocal(data) {
+    localStorage.setItem(KEY, JSON.stringify(data));
+  }
+
+  function histCount() {
+    try {
+      const h = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      return Array.isArray(h) ? h.length : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  function planetName() {
+    try {
+      const m = JSON.parse(localStorage.getItem("farside-mars") || "{}");
+      const map = {
+        mars: "Марс",
+        luna: "Луна",
+        neptune: "Нептун",
+        saturn: "Сатурн",
+        venus: "Венера",
+        atmos: "Атмос",
+      };
+      return map[m.source] || "Марс";
+    } catch {
+      return "Марс";
+    }
+  }
+
+  function initial(name) {
+    const t = (name || "").trim();
+    return t ? t[0].toUpperCase() : "?";
+  }
+
+  function renderAvatar() {
+    if (!avatarView) return;
+    if (avatarData) {
+      avatarView.textContent = "";
+      avatarView.style.backgroundImage = "url(" + JSON.stringify(String(avatarData)) + ")";
+      avatarView.classList.add("has-image");
+    } else {
+      avatarView.style.backgroundImage = "";
+      avatarView.classList.remove("has-image");
+      avatarView.textContent = initial(nameEl && nameEl.value);
+    }
+  }
+
+  function renderPreview() {
+    const name = (nameEl && nameEl.value.trim()) || "";
+    const bio = (bioEl && bioEl.value.trim()) || "";
+    if (previewName) previewName.textContent = name || "Без имени";
+    if (previewBio) previewBio.textContent = bio || "Расскажи, кто ты в эфире.";
+    renderAvatar();
+    updateStats();
+  }
+
+  function updateStats() {
+    const fc = favorites.length;
+    const hc = histCount();
+    const el = (id, v) => {
+      const n = document.getElementById(id);
+      if (n) n.textContent = v;
+    };
+    el("pf-stat-favs", String(fc));
+    el("pf-stat-hist", String(hc));
+    el("pf-stat-planet", planetName());
+    el("pf-chip-favs", "Жанры · " + fc);
+    el("pf-chip-hist", "История · " + hc);
+  }
+
+  function renderFavs() {
+    if (!favList) return;
+    if (!favorites.length) {
+      favList.innerHTML = '<span class="set-hint">Пока пусто — добавь жанр или подтяни из истории.</span>';
+      return;
+    }
+    favList.innerHTML = favorites
+      .map(
+        (g, i) =>
+          '<button type="button" class="pf-fav-chip" data-i="' +
+          i +
+          '">' +
+          String(g).replace(/</g, "&lt;") +
+          " <span aria-hidden=\"true\">×</span></button>",
+      )
+      .join("");
+    favList.querySelectorAll("button[data-i]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        favorites.splice(Number(btn.getAttribute("data-i")), 1);
+        renderFavs();
+        updateStats();
+      });
+    });
+    updateStats();
+  }
+
+  function addFav(raw) {
+    const g = String(raw || "").trim();
+    if (!g) return;
+    const low = g.toLowerCase();
+    favorites = [g, ...favorites.filter((x) => x.toLowerCase() !== low)].slice(0, 8);
+    if (favInput) favInput.value = "";
+    renderFavs();
+  }
+
+  function collect() {
+    return {
+      name: (nameEl && nameEl.value.trim()) || "",
+      bio: (bioEl && bioEl.value.trim()) || "",
+      spotify: (spotifyEl && spotifyEl.value.trim()) || "",
+      avatar: avatarData || "",
+      favorites: favorites.slice(0, 8),
+    };
+  }
+
+  function applyForm(data) {
+    if (nameEl) nameEl.value = data.name || data.displayName || "";
+    if (bioEl) bioEl.value = data.bio || "";
+    if (spotifyEl) spotifyEl.value = data.spotify || "";
+    avatarData = data.avatar || "";
+    if (avatarHidden) avatarHidden.value = avatarData;
+    if (avatarUrl && avatarData && String(avatarData).startsWith("http")) {
+      avatarUrl.value = avatarData;
+    }
+    favorites = Array.isArray(data.favorites) ? data.favorites.slice(0, 8) : [];
+    renderFavs();
+    renderPreview();
+  }
 
   function showLocked() {
     if (locked) locked.hidden = false;
     if (app) app.hidden = true;
     if (label) label.textContent = "";
     if (logoutBtn) logoutBtn.hidden = true;
+    const chip = document.getElementById("pf-chip-user");
+    if (chip) chip.textContent = "Гость";
+    document.getElementById("pf-btn-reg")?.removeAttribute("hidden");
+    document.getElementById("pf-btn-login")?.removeAttribute("hidden");
   }
 
   function showApp(user) {
     if (locked) locked.hidden = true;
     if (app) app.hidden = false;
-    if (label) label.textContent = "@" + user.nick;
-    if (logoutBtn) {
-      logoutBtn.hidden = false;
-      logoutBtn.onclick = async () => {
-        await FarsideAuth.logout();
-        location.reload();
-      };
+    if (label) label.textContent = "@" + (user.nick || "—");
+    if (logoutBtn) logoutBtn.hidden = false;
+    const chip = document.getElementById("pf-chip-user");
+    if (chip) chip.textContent = "@" + (user.nick || "user");
+    document.getElementById("pf-btn-reg")?.setAttribute("hidden", "");
+    document.getElementById("pf-btn-login")?.setAttribute("hidden", "");
+
+    const local = loadLocal();
+    applyForm({
+      name: user.displayName || user.nick || local.name || "",
+      bio: user.bio || local.bio || "",
+      spotify: user.spotify || local.spotify || "",
+      avatar: user.avatar || local.avatar || "",
+      favorites: user.favorites || local.favorites || [],
+    });
+  }
+
+  // avatar file
+  avatarFile?.addEventListener("change", () => {
+    const f = avatarFile.files && avatarFile.files[0];
+    if (!f) return;
+    if (f.size > MAX_AVATAR) {
+      alert("Файл слишком большой (макс ~200KB).");
+      return;
     }
-    // fill from server user
-    if (nameEl) nameEl.value = user.displayName || user.nick || "";
-    if (bioEl) bioEl.value = user.bio || "";
-    if (spotifyEl) spotifyEl.value = user.spotify || "";
-    avatarData = user.avatar || "";
-    favorites = Array.isArray(user.favorites) ? user.favorites.slice(0, 8) : [];
+    const reader = new FileReader();
+    reader.onload = () => {
+      avatarData = String(reader.result || "");
+      if (avatarHidden) avatarHidden.value = avatarData;
+      renderPreview();
+    };
+    reader.readAsDataURL(f);
+  });
+
+  avatarUrl?.addEventListener("change", () => {
+    const u = avatarUrl.value.trim();
+    if (u.startsWith("http")) {
+      avatarData = u;
+      if (avatarHidden) avatarHidden.value = u;
+      renderPreview();
+    }
+  });
+
+  document.getElementById("pf-fav-add")?.addEventListener("click", () => addFav(favInput && favInput.value));
+  favInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addFav(favInput.value);
+    }
+  });
+
+  document.getElementById("pf-from-history")?.addEventListener("click", () => {
+    try {
+      const hist = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+      if (!Array.isArray(hist) || !hist.length) {
+        alert("История пуста — сначала поймай жанры в генераторе.");
+        return;
+      }
+      hist.slice(0, 8).forEach((g) => addFav(g));
+    } catch {
+      alert("Не удалось прочитать историю.");
+    }
+  });
+
+  document.getElementById("pf-save")?.addEventListener("click", async () => {
+    const data = collect();
+    try {
+      saveLocal(data);
+    } catch {
+      alert("Не хватило места в браузере.");
+      return;
+    }
+
+    try {
+      const sess = Object.assign(
+        {},
+        (window.FarsideAuth && FarsideAuth.session && FarsideAuth.session()) || {},
+        {
+          displayName: data.name,
+          bio: data.bio,
+          spotify: data.spotify,
+          avatar: data.avatar && String(data.avatar).startsWith("http") ? data.avatar : "",
+          favorites: data.favorites,
+        },
+      );
+      localStorage.setItem("farside-session-v1", JSON.stringify(sess));
+    } catch (_) {}
+
+    try {
+      if (window.FarsideAuth && FarsideAuth.token && FarsideAuth.token()) {
+        const payload = {
+          displayName: data.name,
+          bio: data.bio,
+          spotify: data.spotify,
+          favorites: data.favorites,
+          avatar:
+            data.avatar && String(data.avatar).startsWith("http")
+              ? data.avatar
+              : "",
+        };
+        if (FarsideAuth.api) {
+          await FarsideAuth.api("/api/auth/profile", {
+            method: "PATCH",
+            body: payload,
+          });
+        } else {
+          await fetch(
+            (window.FARSIDE_API || "https://farside-hkic.onrender.com") +
+              "/api/auth/profile",
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + FarsideAuth.token(),
+              },
+              body: JSON.stringify(payload),
+            },
+          );
+        }
+      }
+    } catch (e) {
+      console.warn("profile save", e);
+    }
+
     renderPreview();
-    renderFavs();
-  }
+    if (statusEl) {
+      statusEl.hidden = false;
+      setTimeout(() => {
+        statusEl.hidden = true;
+      }, 1600);
+    }
+  });
 
-  if (!window.FarsideAuth) {
-    showLocked();
-    return;
-  }
-  // мгновенно из localStorage, потом уточняем с сервера
-  const cached = FarsideAuth.session && FarsideAuth.session();
-  if (cached && cached.nick) showApp(cached);
-  try {
-    const { user } = await FarsideAuth.me();
-    showApp(user);
-  } catch (_) {
-    if (!(cached && cached.nick)) showLocked();
-  }
+  document.getElementById("pf-reset")?.addEventListener("click", () => {
+    if (!confirm("Сбросить локальный профиль?")) return;
+    localStorage.removeItem(KEY);
+    avatarData = "";
+    favorites = [];
+    applyForm({});
+  });
+
+  logoutBtn?.addEventListener("click", async () => {
+    if (window.FarsideAuth) await FarsideAuth.logout();
+    location.reload();
+  });
+
+  nameEl?.addEventListener("input", renderPreview);
+  bioEl?.addEventListener("input", renderPreview);
+
+  (async function boot() {
+    updateStats();
+    if (!window.FarsideAuth) {
+      showLocked();
+      return;
+    }
+    const cached = FarsideAuth.session && FarsideAuth.session();
+    if (cached && cached.nick) showApp(cached);
+    try {
+      const { user } = await FarsideAuth.me();
+      showApp(user);
+    } catch {
+      if (!(cached && cached.nick)) showLocked();
+    }
+  })();
 })();
-

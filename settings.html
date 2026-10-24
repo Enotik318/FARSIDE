@@ -4,12 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Настройки — FARSIDE</title>
-  <meta name="description" content="Настройки FARSIDE." />
   <meta name="theme-color" content="#0a0a0a" />
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <script>
     (function () {
@@ -22,257 +21,196 @@
 </head>
 <body>
   <div class="video-backdrop" aria-hidden="true">
-    <video id="bg-video" autoplay muted loop playsinline preload="auto" poster="media/horizon-poster.jpg">
+    <video id="bg-video" autoplay muted loop playsinline preload="auto">
       <source src="media/mainfon.mp4" type="video/mp4" />
     </video>
     <div class="video-vignette"></div>
     <div class="video-scrim"></div>
-</div>
-
-  <div class="nav-shell">
-    <a class="skip-link" href="#content">К содержанию</a>
-    <div class="icon-rail">
-      <div class="rail-logo" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="12" cy="12" r="8"/>
-          <ellipse cx="12" cy="12" rx="3.5" ry="8"/>
-          <path d="M4 12h16"/>
-        </svg>
-      </div>
-      <button type="button" class="burger-btn" id="burger" aria-expanded="false" aria-controls="nav-panel" aria-label="Открыть меню">
-        <span class="burger-icon" id="burger-icon"><span></span><span></span></span>
-      </button>
-      <div class="rail-spacer"></div>
-      <span class="rail-brand">FARSIDE</span>
-    </div>
-    <div class="mobile-topbar"><span>FARSIDE</span></div>
-    <div class="nav-overlay" id="nav-overlay" aria-hidden="true"></div>
-    <aside class="nav-panel" id="nav-panel" role="dialog" aria-modal="true" aria-label="Навигация">
-      <div class="nav-panel-head">
-        <div class="nav-panel-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
-          </svg>
-          <span data-i18n="nav.menu">Меню</span>
-        </div>
-        <button type="button" class="nav-close" id="nav-close" aria-label="Закрыть">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="nav-scroll">
-        <div class="nav-section">
-          <p class="nav-section-label" data-i18n="nav.section">Навигация</p>
-          <ul class="nav-items">
-            <li>
-              <a href="index.html">
-                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
-                <span class="nav-text" data-i18n="nav.home">Главная</span>
-                <span class="nav-count">01</span>
-              </a>
-            </li>
-            <li>
-              <a href="generator.html">
-                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>
-                <span class="nav-text" data-i18n="nav.generator">Генератор</span>
-                <span class="nav-count">02</span>
-              </a>
-            </li>
-            <li>
-              <a href="tree.html">
-                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M8 7h8"/><path d="M6 12h12"/><path d="M4 17h16"/></svg></span>
-                <span class="nav-text" data-i18n="nav.tree">Дерево</span>
-                <span class="nav-count">03</span>
-              </a>
-            </li>
-            <li>
-              <a href="about.html">
-                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></span>
-                <span class="nav-text" data-i18n="nav.manifesto">Манифест</span>
-                <span class="nav-count">04</span>
-              </a>
-            </li>
-            <li>
-            <a href="profile.html">
-                <span class="nav-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-                <span class="nav-text" data-i18n="nav.profile">Профиль</span>
-                <span class="nav-count">05</span>
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <p class="nav-footer" data-i18n="nav.footer">Случайный жанр за горизонтом привычного звука.</p>
-    </aside>
   </div>
 
-  
-  
   <main class="stage settings-stage" id="content">
-    <p class="kicker hero-enter" data-i18n="set.kicker">Система</p>
-    <p class="settings-back"><a href="profile.html">← Профиль</a></p>
-    <h1 class="headline hero-enter hero-enter-1" style="font-size:clamp(2.2rem,5vw,3.2rem)" data-i18n="set.title">Настройки</h1>
+    <header class="set-hero set-hero-compact">
+      <p class="kicker">SYSTEM</p>
+      <h1 class="headline" data-i18n="set.title">Настройки</h1>
+      <div class="set-status-row">
+        <div class="set-chip" id="set-chip-theme">Тема · —</div>
+        <div class="set-chip" id="set-chip-planet">Планета · —</div>
+        <div class="set-chip" id="set-chip-api">API · …</div>
+        <div class="set-chip" id="set-chip-user">Аккаунт · гость</div>
+      </div>
+    </header>
 
-    <div class="settings-layout hero-enter hero-enter-2">
-      <div class="settings-side">
-
-        
-        <div class="settings-card">
-          <h2>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-            <span data-i18n="set.theme">Тема</span>
-          </h2>
-          <p data-i18n="set.themeDesc">Тёмная ночью, светлая днём.</p>
-          <div class="theme-switch" role="group" aria-label="Тема">
-            <button type="button" data-theme-btn="dark" class="is-active">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-              <span data-i18n="set.dark">Тёмная</span>
-            </button>
-            <button type="button" data-theme-btn="light">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-              <span data-i18n="set.light">Светлая</span>
-            </button>
+    <div class="set-grid set-grid-compact">
+      <section class="set-card">
+        <div class="set-card-head">
+          <span class="set-idx">01</span>
+          <div>
+            <h2 data-i18n="set.appearance">Внешний вид</h2>
+            <p>Тема и стекло панелей.</p>
           </div>
         </div>
-
-        <div class="settings-card">
-          <h2>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4"/></svg>
-            <span>Стиль сайта</span>
-          </h2>
-          <p>Облик интерфейса. «FARSIDE» — твой текущий дефолт.</p>
-          <div class="style-switch" role="group" aria-label="Стиль сайта">
-            <button type="button" data-style-btn="default" class="is-active">
-              <span class="style-swatch style-swatch-default"></span>
-              FARSIDE
-            </button>
-            <button type="button" data-style-btn="glass">
-              <span class="style-swatch style-swatch-glass"></span>
-              Glass
-            </button>
-            <button type="button" data-style-btn="paper">
-              <span class="style-swatch style-swatch-paper"></span>
-              Paper
-            </button>
-            <button type="button" data-style-btn="poster">
-              <span class="style-swatch style-swatch-poster"></span>
-              Poster
-            </button>
+        <div class="set-block">
+          <span class="set-label" data-i18n="set.theme">Тема</span>
+          <div class="set-seg">
+            <button type="button" data-theme-btn="dark" class="is-active" data-i18n="set.dark">Тёмная</button>
+            <button type="button" data-theme-btn="light" data-i18n="set.light">Светлая</button>
           </div>
         </div>
-        <div class="settings-card">
-          <h2>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6"/></svg>
-            <span data-i18n="set.lang">Язык</span>
-          </h2>
-          <p data-i18n="set.langDesc">Интерфейс сайта.</p>
-          <div class="lang-switch" role="group" aria-label="Язык">
+        <div class="set-block">
+          <span class="set-label" data-i18n="set.style">Стиль</span>
+          <div class="set-seg">
+            <button type="button" data-style-btn="default" class="is-active" data-i18n="set.original">Оригинал</button>
+            <button type="button" data-style-btn="glass" data-i18n="set.glass">Стекло</button>
+          </div>
+        </div>
+        <div class="set-block">
+          <span class="set-label" data-i18n="set.lang">Язык</span>
+          <div class="set-seg set-seg-wrap">
             <button type="button" data-lang-btn="ru" class="is-active">RU</button>
             <button type="button" data-lang-btn="en">EN</button>
+            <button type="button" data-lang-btn="uk">UK</button>
+            <button type="button" data-lang-btn="de">DE</button>
+            <button type="button" data-lang-btn="es">ES</button>
           </div>
         </div>
-        <p class="settings-note" data-i18n="set.note">Тема, язык и фон сохраняются в браузере.</p>
-      </div>
+        <div class="set-block">
+          <span class="set-label" data-i18n="set.motion">Переходы</span>
+          <div class="set-seg">
+            <button type="button" id="motion-on" class="is-active" data-i18n="set.on">Вкл</button>
+            <button type="button" id="motion-off" data-i18n="set.off">Выкл</button>
+          </div>
+        </div>
+      </section>
 
-      <section class="settings-card mars-panel" id="mars">
-        <div class="mars-panel-grid">
-          <div class="mars-panel-main">
-            <h2>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-              <span data-i18n="mars.title">Фон</span>
-            </h2>
-            <p data-i18n="mars.lead">Затемнение, контраст, насыщенность — для выбранной планеты.</p>
-            <div class="mars-fields">
-              <div class="planet-field">
-                <label for="mars-bright" data-i18n="mars.bright">Яркость</label>
-                <input type="range" id="mars-bright" min="20" max="120" value="52" />
-              </div>
-              <div class="planet-field">
-                <label for="mars-contrast" data-i18n="mars.contrast">Контраст</label>
-                <input type="range" id="mars-contrast" min="80" max="150" value="115" />
-              </div>
-              <div class="planet-field">
-                <label for="mars-saturate" data-i18n="mars.saturate">Насыщенность</label>
-                <input type="range" id="mars-saturate" min="0" max="150" value="0" />
-              </div>
-              <div class="planet-field">
-                <label for="mars-gray" data-i18n="mars.gray">Чёрно-белый</label>
-                <input type="range" id="mars-gray" min="0" max="100" value="100" />
-              </div>
-              <div class="planet-field">
-                <label for="mars-opacity" data-i18n="mars.opacity">Прозрачность видео</label>
-                <input type="range" id="mars-opacity" min="30" max="100" value="100" />
-              </div>
-              <div class="planet-actions">
-                <button type="button" class="btn btn-primary btn-sm" id="mars-save" data-i18n="mars.save">Сохранить</button>
-                <button type="button" class="btn btn-ghost btn-sm" id="mars-reset" data-i18n="mars.reset">Сбросить</button>
+      <section class="set-card">
+        <div class="set-card-head">
+          <span class="set-idx">02</span>
+          <div>
+            <h2 data-i18n="set.system">Система</h2>
+            <p>API и аккаунт.</p>
+          </div>
+        </div>
+        <div class="set-block">
+          <span class="set-label">API</span>
+          <p class="set-hint" id="set-api-line">проверка…</p>
+          <code class="set-code" id="set-api-url"></code>
+        </div>
+        <div class="set-block">
+          <span class="set-label">Аккаунт</span>
+          <p class="set-hint" id="set-user-line">Не вошли</p>
+          <div class="set-actions">
+            <a class="btn btn-ghost" href="profile.html">Профиль</a>
+            <button type="button" class="btn btn-ghost" data-open-auth="login">Вход</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- PLANETS POWER -->
+      <section class="set-card set-card-wide set-planet-lab">
+        <div class="set-card-head">
+          <span class="set-idx">03</span>
+          <div>
+            <h2 data-i18n="set.planets">Лаборатория планет</h2>
+            <p>Выбери мир, крути картинку, сравни пресеты. Всё применяется сразу.</p>
+          </div>
+        </div>
+
+        <div class="planet-lab">
+          <div class="planet-lab-stage">
+            <div class="planet-lab-frame">
+              <video id="planet-preview" muted loop playsinline autoplay></video>
+              <div class="planet-lab-overlay">
+                <span id="planet-lab-name">Марс</span>
+                <span id="planet-lab-tag">live preview</span>
               </div>
             </div>
+            <div class="planet-lab-picks" id="planet-source-list">
+              <button type="button" class="planet-mini planet-pick is-active" data-src="mars">
+                <video muted loop playsinline preload="metadata"><source src="media/mainfon.mp4" type="video/mp4"/></video>
+                <span>Марс</span>
+              </button>
+              <button type="button" class="planet-mini planet-pick" data-src="luna">
+                <video muted loop playsinline preload="metadata"><source src="media/fonLuna.mp4" type="video/mp4"/></video>
+                <span>Луна</span>
+              </button>
+              <button type="button" class="planet-mini planet-pick" data-src="neptune">
+                <video muted loop playsinline preload="metadata"><source src="media/neptyn.mp4" type="video/mp4"/></video>
+                <span>Нептун</span>
+              </button>
+              <button type="button" class="planet-mini planet-pick" data-src="saturn">
+                <video muted loop playsinline preload="metadata"><source src="media/satyrn.mp4" type="video/mp4"/></video>
+                <span>Сатурн</span>
+              </button>
+              <button type="button" class="planet-mini planet-pick" data-src="venus">
+                <video muted loop playsinline preload="metadata"><source src="media/venera.mp4" type="video/mp4"/></video>
+                <span>Венера</span>
+              </button>
+              <button type="button" class="planet-mini planet-pick" data-src="atmos">
+                <video muted loop playsinline preload="metadata"><source src="media/atmos.mp4" type="video/mp4"/></video>
+                <span>Атмос</span>
+              </button>
+            </div>
           </div>
-          <aside class="planet-mini" aria-label="Планеты">
-            <p class="planet-picker-label" data-i18n="mars.planets">Планеты</p>
-            <ul class="planet-picker-list" id="planet-source-list">
-              <li>
-                <button type="button" class="planet-pick is-active" data-src="mars" id="src-mars">
-                  <span class="planet-pick-thumb">
-                    <video muted loop playsinline preload="metadata">
-                      <source src="media/mainfon.mp4" type="video/mp4" />
-                    </video>
-                  </span>
-                  <span class="planet-pick-meta">
-                    <strong data-i18n="mars.mars">Марс</strong>
-                    <span data-i18n="mars.video">Видео</span>
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button type="button" class="planet-pick" data-src="luna" id="src-luna">
-                  <span class="planet-pick-thumb">
-                    <video muted loop playsinline preload="metadata">
-                      <source src="media/fonLuna.mp4" type="video/mp4" />
-                    </video>
-                  </span>
-                  <span class="planet-pick-meta">
-                    <strong data-i18n="mars.luna">Луна</strong>
-                    <span data-i18n="mars.video">Видео</span>
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button type="button" class="planet-pick" data-src="neptune" id="src-neptune">
-                  <span class="planet-pick-thumb">
-                    <video muted loop playsinline preload="metadata">
-                      <source src="media/neptyn.mp4" type="video/mp4" />
-                    </video>
-                  </span>
-                  <span class="planet-pick-meta">
-                    <strong data-i18n="mars.neptune">Нептун</strong>
-                    <span data-i18n="mars.video">Видео</span>
-                  </span>
-                </button>
-              </li>
-              <li>
-                <button type="button" class="planet-pick" data-src="saturn" id="src-saturn">
-                  <span class="planet-pick-thumb">
-                    <video muted loop playsinline preload="metadata">
-                      <source src="media/satyrn.mp4" type="video/mp4" />
-                    </video>
-                  </span>
-                  <span class="planet-pick-meta">
-                    <strong data-i18n="mars.saturn">Сатурн</strong>
-                    <span data-i18n="mars.video">Видео</span>
-                  </span>
-                </button>
-              </li>
-            </ul>
-          </aside>
+
+          <div class="planet-lab-controls">
+            <div class="set-sliders set-sliders-stack">
+              <label class="set-slider">
+                <span class="set-slider-top"><span>Яркость</span><b id="val-bright">52</b></span>
+                <input type="range" id="mars-bright" min="20" max="140" value="100" />
+              </label>
+              <label class="set-slider">
+                <span class="set-slider-top"><span>Контраст</span><b id="val-contrast">115</b></span>
+                <input type="range" id="mars-contrast" min="70" max="160" value="100" />
+              </label>
+              <label class="set-slider">
+                <span class="set-slider-top"><span>Насыщенность</span><b id="val-saturate">0</b></span>
+                <input type="range" id="mars-saturate" min="0" max="180" value="100" />
+              </label>
+              <label class="set-slider">
+                <span class="set-slider-top"><span>Ч/Б</span><b id="val-gray">100</b></span>
+                <input type="range" id="mars-gray" min="0" max="100" value="0" />
+              </label>
+              <label class="set-slider">
+                <span class="set-slider-top"><span>Видимость</span><b id="val-opacity">100</b></span>
+                <input type="range" id="mars-opacity" min="20" max="100" value="100" />
+              </label>
+              <label class="set-slider">
+                <span class="set-slider-top"><span>Виньетка</span><b id="val-vignette">40</b></span>
+                <input type="range" id="planet-vignette" min="0" max="90" value="0" />
+              </label>
+              <label class="set-slider">
+                <span class="set-slider-top"><span>Зерно</span><b id="val-grain">0</b></span>
+                <input type="range" id="planet-grain" min="0" max="60" value="0" />
+              </label>
+            </div>
+
+            <div class="planet-presets">
+              <span class="set-label">Пресеты</span>
+              <div class="set-seg set-seg-wrap">
+                <button type="button" data-preset="factory">Заводской</button>
+                <button type="button" data-preset="cinema">Кино</button>
+                <button type="button" data-preset="noir">Нуар</button>
+                <button type="button" data-preset="soft">Мягкий</button>
+                <button type="button" data-preset="vivid">Цвет</button>
+                <button type="button" data-preset="warm">Тёплый</button>
+              </div>
+            </div>
+
+            <div class="set-actions">
+              <button type="button" class="btn btn-primary" id="mars-save" data-i18n="set.save">Сохранить</button>
+              <button type="button" class="btn btn-ghost" id="mars-reset" data-i18n="set.reset">Сброс</button>
+            </div>
+          </div>
         </div>
       </section>
     </div>
   </main>
+
   <script src="config.js"></script>
   <script src="app.js"></script>
+  <script src="nav-top.js"></script>
   <script src="mars.js"></script>
   <script src="auth.js"></script>
+  <script src="settings-page.js"></script>
 </body>
 </html>

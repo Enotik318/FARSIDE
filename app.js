@@ -11,7 +11,9 @@
       "nav.generator": "Генератор",
       "nav.tree": "Дерево",
       "nav.manifesto": "Манифест",
-      "nav.profile": "Настройки",
+      "nav.settings": "Настройки",
+      "nav.about": "Манифест",
+      "nav.profile": "Профиль",
       "nav.footer": "Случайный жанр за горизонтом привычного звука.",
       "home.kicker": "Spotify · genre generator",
       "home.title1": "За горизонтом",
@@ -211,16 +213,71 @@
     return localStorage.getItem(LANG_KEY) || "ru";
   }
   function applyLang(lang) {
-    const dict = I18N[lang] || I18N.ru;
+    const base = I18N[lang] || I18N.en || I18N.ru;
+    const EXTRA = {
+      uk: {
+        "nav.home": "Головна", "nav.generator": "Генератор", "nav.tree": "Дерево",
+        "nav.profile": "Профіль", "nav.settings": "Налаштування", "nav.about": "Маніфест",
+        "nav.manifesto": "Маніфест",
+        "set.title": "Налаштування", "set.theme": "Тема", "set.lang": "Мова",
+        "set.appearance": "Вигляд", "set.system": "Система", "set.planets": "Лабораторія планет",
+        "set.dark": "Темна", "set.light": "Світла", "set.style": "Стиль",
+        "set.original": "Оригінал", "set.glass": "Скло", "set.motion": "Переходи",
+        "set.on": "Увімк", "set.off": "Вимк", "set.save": "Зберегти", "set.reset": "Скинути",
+      },
+      de: {
+        "nav.home": "Start", "nav.generator": "Generator", "nav.tree": "Baum",
+        "nav.profile": "Profil", "nav.settings": "Einstellungen", "nav.about": "Manifest",
+        "nav.manifesto": "Manifest",
+        "set.title": "Einstellungen", "set.theme": "Design", "set.lang": "Sprache",
+        "set.appearance": "Erscheinung", "set.system": "System", "set.planets": "Planeten-Labor",
+        "set.dark": "Dunkel", "set.light": "Hell", "set.style": "Stil",
+        "set.original": "Original", "set.glass": "Glas", "set.motion": "Übergänge",
+        "set.on": "An", "set.off": "Aus", "set.save": "Speichern", "set.reset": "Reset",
+      },
+      es: {
+        "nav.home": "Inicio", "nav.generator": "Generador", "nav.tree": "Árbol",
+        "nav.profile": "Perfil", "nav.settings": "Ajustes", "nav.about": "Manifiesto",
+        "nav.manifesto": "Manifiesto",
+        "set.title": "Ajustes", "set.theme": "Tema", "set.lang": "Idioma",
+        "set.appearance": "Apariencia", "set.system": "Sistema", "set.planets": "Lab de planetas",
+        "set.dark": "Oscuro", "set.light": "Claro", "set.style": "Estilo",
+        "set.original": "Original", "set.glass": "Cristal", "set.motion": "Transiciones",
+        "set.on": "On", "set.off": "Off", "set.save": "Guardar", "set.reset": "Reset",
+      },
+      en: {
+        "nav.profile": "Profile", "nav.settings": "Settings", "nav.about": "Manifesto",
+        "set.title": "Settings", "set.theme": "Theme", "set.lang": "Language",
+        "set.appearance": "Appearance", "set.system": "System", "set.planets": "Planet lab",
+        "set.dark": "Dark", "set.light": "Light", "set.style": "Style",
+        "set.original": "Original", "set.glass": "Glass", "set.motion": "Transitions",
+        "set.on": "On", "set.off": "Off", "set.save": "Save", "set.reset": "Reset",
+      },
+      ru: {
+        "nav.profile": "Профиль", "nav.settings": "Настройки", "nav.about": "Манифест",
+        "set.title": "Настройки", "set.theme": "Тема", "set.lang": "Язык",
+        "set.appearance": "Внешний вид", "set.system": "Система", "set.planets": "Лаборатория планет",
+        "set.dark": "Тёмная", "set.light": "Светлая", "set.style": "Стиль",
+        "set.original": "Оригинал", "set.glass": "Стекло", "set.motion": "Переходы",
+        "set.on": "Вкл", "set.off": "Выкл", "set.save": "Сохранить", "set.reset": "Сброс",
+      },
+    };
+    const dict = Object.assign({}, I18N.ru, base, EXTRA.ru, EXTRA[lang] || {});
     document.documentElement.setAttribute("lang", lang);
     try { localStorage.setItem(LANG_KEY, lang); } catch (_) {}
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
-      if (dict[key] != null) el.textContent = dict[key];
+      if (key && dict[key] != null) el.textContent = dict[key];
     });
     document.querySelectorAll("[data-lang-btn]").forEach((btn) => {
       btn.classList.toggle("is-active", btn.getAttribute("data-lang-btn") === lang);
     });
+    // top rail
+    if (window.FarsideNav && typeof FarsideNav.relabel === "function") {
+      FarsideNav.relabel(dict);
+    }
+    window.__farsideDict = dict;
+    window.dispatchEvent(new CustomEvent("farside-lang", { detail: { lang: lang, dict: dict } }));
   }
 
   applyTheme(getTheme());
