@@ -125,26 +125,51 @@ async function searchPlaylistsByGenre(genre, limit = 8) {
 
 async function searchTracksByGenre(genre, limit = 12) {
   const token = await getAccessToken();
-  const url = new URL("https://api.spotify.com/v1/search");
-  url.searchParams.set("q", `genre:"${genre}"`);
-  url.searchParams.set("type", "track");
-  url.searchParams.set("limit", String(limit));
-  let response = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!response.ok) {
-    const url2 = new URL("https://api.spotify.com/v1/search");
-    url2.searchParams.set("q", genre);
-    url2.searchParams.set("type", "track");
-    url2.searchParams.set("limit", String(limit));
-    response = await fetch(url2, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  const words = String(genre || "").trim().split(/\s+/).filter(Boolean);
+  const queries = [
+    `genre:"${genre}"`,
+    genre,
+    words.slice(0, 2).join(" "),
+    words[0],
+    `${genre} tag:new`,
+  ].filter((q, i, a) => q && a.indexOf(q) === i);
+
+  const seen = new Set();
+  const out = [];
+
+  for (const q of queries) {
+    if (out.length >= limit) break;
+    const url = new URL("https://api.spotify.com/v1/search");
+    url.searchParams.set("q", q);
+    url.searchParams.set("type", "track");
+    url.searchParams.set("limit", String(Math.min(limit, 15)));
+    url.searchParams.set("market", "US");
+    try {
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) {
+        console.warn("tracks search", response.status, q);
+        continue;
+      }
+      const data = await response.json();
+      for (const raw of data.tracks?.items || []) {
+        const t = mapTrack(raw);
+        if (!t || seen.has(t.id)) continue;
+        seen.add(t.id);
+        out.push(t);
+        if (out.length >= limit) break;
+      }
+      if (out.length) console.log("tracks ok", q, out.length);
+    } catch (e) {
+      console.warn("tracks err", e.message);
+    }
   }
-  if (!response.ok) return [];
-  const data = await response.json();
-  return (data.tracks?.items || []).map(mapTrack).filter(Boolean);
+  return out;
 }
+
+
+
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, genres: GENRES.length, auth: true, community: true });

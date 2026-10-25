@@ -42,20 +42,53 @@
     } catch (_) {}
   }
 
+  function readLocalProfile() {
+    try {
+      return JSON.parse(localStorage.getItem(PROFILE_KEY) || "null") || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function pickAvatar(serverAvatar, localAvatar) {
+    const s = serverAvatar != null ? String(serverAvatar) : "";
+    const l = localAvatar != null ? String(localAvatar) : "";
+    // keep data-URL / blob from this browser if server has no http image
+    if (l && l.indexOf("data:") === 0 && !(s.indexOf("http") === 0)) return l;
+    if (s) return s;
+    return l || "";
+  }
+
   function saveLocalProfile(user) {
     try {
+      const prev = readLocalProfile();
+      const avatar = pickAvatar(user && user.avatar, prev.avatar);
       localStorage.setItem(
         PROFILE_KEY,
         JSON.stringify({
-          name: user.displayName || user.nick || "",
-          bio: user.bio || "",
-          spotify: user.spotify || "",
-          avatar: user.avatar || "",
-          favorites: user.favorites || [],
+          name: (user && (user.displayName || user.nick)) || prev.name || "",
+          bio: (user && user.bio) != null && user.bio !== "" ? user.bio : prev.bio || "",
+          spotify: (user && user.spotify) || prev.spotify || "",
+          avatar: avatar,
+          favorites:
+            user && Array.isArray(user.favorites) && user.favorites.length
+              ? user.favorites
+              : prev.favorites || [],
           updatedAt: Date.now(),
-          accountNick: user.nick || "",
+          accountNick: (user && user.nick) || prev.accountNick || "",
         }),
       );
+      // also keep avatar on session object
+      try {
+        const sess = readSession() || {};
+        if (user && user.nick) {
+          writeSession(
+            Object.assign({}, sess, user, {
+              avatar: avatar,
+            }),
+          );
+        }
+      } catch (_) {}
     } catch (_) {}
   }
 
@@ -149,18 +182,25 @@
       e.preventDefault();
       const form = e.target;
       const err = form.querySelector("[data-auth-error]");
+      const btn = form.querySelector(".auth-submit");
       err.hidden = true;
       const fd = new FormData(form);
+      if (btn) { btn.disabled = true; btn.textContent = "…"; }
       try {
         const data = await api("/api/auth/login", {
           method: "POST",
-          body: { nick: fd.get("nick"), password: fd.get("password") },
+          body: {
+            nick: String(fd.get("nick") || "").trim(),
+            password: String(fd.get("password") || ""),
+          },
         });
         finishAuth(data);
         closeAuth();
       } catch (ex) {
         err.textContent = ex.message || "Ошибка входа";
         err.hidden = false;
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "Войти"; }
       }
     });
 
@@ -168,6 +208,7 @@
       e.preventDefault();
       const form = e.target;
       const err = form.querySelector("[data-auth-error]");
+      const btn = form.querySelector(".auth-submit");
       err.hidden = true;
       const fd = new FormData(form);
       if (String(fd.get("password")) !== String(fd.get("password2"))) {
@@ -175,13 +216,14 @@
         err.hidden = false;
         return;
       }
+      if (btn) { btn.disabled = true; btn.textContent = "…"; }
       try {
         const data = await api("/api/auth/register", {
           method: "POST",
           body: {
-            nick: fd.get("nick"),
-            password: fd.get("password"),
-            displayName: fd.get("displayName") || fd.get("nick"),
+            nick: String(fd.get("nick") || "").trim(),
+            password: String(fd.get("password") || ""),
+            displayName: String(fd.get("displayName") || fd.get("nick") || "").trim(),
           },
         });
         finishAuth(data);
@@ -189,6 +231,8 @@
       } catch (ex) {
         err.textContent = ex.message || "Ошибка регистрации";
         err.hidden = false;
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "Создать аккаунт"; }
       }
     });
   }
@@ -203,7 +247,7 @@
       new CustomEvent("farside-auth", { detail: data.user || null }),
     );
     const p = location.pathname || "";
-    if (/profile\.html|community\.html/.test(p)) location.reload();
+    if (/profile/i.test(p)) location.reload();
   }
 
   function openAuth(tab) {
@@ -223,24 +267,37 @@
   }
 
   async function me() {
-    // 1) server
+    const prevProfile = readLocalProfile();
     try {
       const data = await api("/api/auth/me");
       if (data && data.user) {
-        writeSession(data.user);
-        saveLocalProfile(data.user);
-        return data;
+        const avatar = pickAvatar(data.user.avatar, prevProfile.avatar);
+        const merged = Object.assign({}, data.user, { avatar: avatar });
+        // if local has favorites and server empty — keep local
+        if (
+          (!merged.favorites || !merged.favorites.length) &&
+          prevProfile.favorites &&
+          prevProfile.favorites.length
+        ) {
+          merged.favorites = prevProfile.favorites;
+        }
+        writeSession(merged);
+        saveLocalProfile(merged);
+        return { user: merged };
       }
     } catch (e) {
-      // 2) durable local session after refresh / server sleep
       const local = readSession();
       if (local && local.nick && token()) {
-        return { user: local, offline: true };
+        const avatar = pickAvatar(local.avatar, prevProfile.avatar);
+        return { user: Object.assign({}, local, { avatar: avatar }), offline: true };
       }
       throw e;
     }
     const local = readSession();
-    if (local && local.nick) return { user: local, offline: true };
+    if (local && local.nick) {
+      const avatar = pickAvatar(local.avatar, prevProfile.avatar);
+      return { user: Object.assign({}, local, { avatar: avatar }), offline: true };
+    }
     const err = new Error("unauthorized");
     err.status = 401;
     throw err;

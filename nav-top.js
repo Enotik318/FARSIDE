@@ -1,12 +1,11 @@
 
 (function () {
-  const ROUTES = [
+  var ROUTES = [
     { href: "index.html", label: "Главная", key: "nav.home" },
     { href: "generator.html", label: "Генератор", key: "nav.generator" },
-    { href: "tree.html", label: "Дерево", key: "nav.tree" },
+    { href: "daily.html", label: "Ритуал", key: "nav.daily" },
     { href: "profile.html", label: "Профиль", key: "nav.profile" },
-    { href: "settings.html", label: "Настройки", key: "nav.settings" },
-    { href: "about.html", label: "Манифест", key: "nav.about" },
+    { href: "settings.html", label: "Настройки", key: "nav.settings" }
   ];
 
   window.FarsideNav = {
@@ -16,64 +15,65 @@
         var i = Number(a.getAttribute("data-nav-i"));
         var r = ROUTES[i];
         if (!r) return;
-        var t = dict[r.key] || r.label;
-        a.textContent = t;
+        a.textContent = dict[r.key] || r.label;
       });
-      var pill = document.querySelector(".top-rail-pill");
-      var on = document.querySelector(".top-rail a.is-on");
-      var inner = document.querySelector(".top-rail-inner");
-      if (pill && on && inner) {
-        var ir = inner.getBoundingClientRect();
-        var ar = on.getBoundingClientRect();
-        pill.style.width = ar.width + "px";
-        pill.style.transform = "translateX(" + (ar.left - ir.left) + "px)";
-      }
+      movePill();
     },
   };
 
-
   function fileName() {
-    const p = (location.pathname || "").split("/").pop() || "";
+    var p = (location.pathname || "").split("/").pop() || "";
     if (!p || p === "/") return "index.html";
+    // profile variants map to profile
+    if (/^profile/i.test(p)) return "profile.html";
     return p;
   }
 
   function indexOf(name) {
-    const n = name || fileName();
-    for (let i = 0; i < ROUTES.length; i++) {
+    var n = name || fileName();
+    for (var i = 0; i < ROUTES.length; i++) {
       if (ROUTES[i].href === n) return i;
     }
-    if (/^index\.html?$/.test(n) || n === "") return 0;
-    for (let i = 0; i < ROUTES.length; i++) {
-      if (n.indexOf(ROUTES[i].href.replace(".html", "")) === 0) return i;
-    }
-    return 0;
+    if (!n || n === "index.html" || n === "index.htm") return 0;
+    return -1;
+  }
+
+  function movePill() {
+    var rail = document.querySelector(".top-rail");
+    if (!rail) return;
+    var inner = rail.querySelector(".top-rail-inner");
+    var pill = rail.querySelector(".top-rail-pill");
+    var on = rail.querySelector("a.is-on");
+    if (!inner || !pill || !on) return;
+    var ir = inner.getBoundingClientRect();
+    var ar = on.getBoundingClientRect();
+    pill.style.width = ar.width + "px";
+    pill.style.transform = "translateX(" + (ar.left - ir.left) + "px)";
   }
 
   function ensureUI() {
     if (!document.querySelector(".top-rail")) {
-      const rail = document.createElement("div");
+      var rail = document.createElement("div");
       rail.className = "top-rail";
-      rail.innerHTML =
+      var html =
         '<div class="top-rail-inner" role="navigation" aria-label="Разделы">' +
-        '<span class="top-rail-pill" aria-hidden="true"></span>' +
-        ROUTES.map(function (r, i) {
-          return (
-            '<a href="' +
-            r.href +
-            '" data-nav-i="' +
-            i +
-            '">' +
-            r.label +
-            "</a>"
-          );
-        }).join("") +
-        "</div>";
+        '<span class="top-rail-pill" aria-hidden="true"></span>';
+      for (var i = 0; i < ROUTES.length; i++) {
+        html +=
+          '<a href="' +
+          ROUTES[i].href +
+          '" data-nav-i="' +
+          i +
+          '">' +
+          ROUTES[i].label +
+          "</a>";
+      }
+      html += "</div>";
+      rail.innerHTML = html;
       document.body.appendChild(rail);
     }
-
     if (!document.querySelector(".side-arrows")) {
-      const wrap = document.createElement("div");
+      var wrap = document.createElement("div");
       wrap.className = "side-arrows";
       wrap.innerHTML =
         '<button type="button" class="side-arrow side-arrow-left" aria-label="Назад">' +
@@ -84,29 +84,15 @@
         "</button>";
       document.body.appendChild(wrap);
     }
-
     document.body.classList.add("has-top-rail", "no-side-nav");
     var fn = fileName();
     if (fn.indexOf("generator") !== -1) document.body.classList.add("page-gen");
     if (fn.indexOf("tree") !== -1) document.body.classList.add("page-tree");
   }
 
-  function movePill() {
-    const rail = document.querySelector(".top-rail");
-    if (!rail) return;
-    const inner = rail.querySelector(".top-rail-inner");
-    const pill = rail.querySelector(".top-rail-pill");
-    const on = rail.querySelector("a.is-on");
-    if (!inner || !pill || !on) return;
-    const ir = inner.getBoundingClientRect();
-    const ar = on.getBoundingClientRect();
-    pill.style.width = ar.width + "px";
-    pill.style.transform = "translateX(" + (ar.left - ir.left) + "px)";
-  }
-
   function markActive() {
-    const i = indexOf();
-    const rail = document.querySelector(".top-rail");
+    var i = indexOf();
+    var rail = document.querySelector(".top-rail");
     if (!rail) return;
     rail.querySelectorAll("a").forEach(function (a, idx) {
       a.classList.toggle("is-on", idx === i);
@@ -115,7 +101,7 @@
   }
 
   function wrapSlide() {
-    const el =
+    var el =
       document.querySelector("main") ||
       document.querySelector(".stage") ||
       document.querySelector(".hero");
@@ -124,8 +110,15 @@
 
   function goTo(index, dir) {
     if (index < 0 || index >= ROUTES.length) return;
-    const target = ROUTES[index].href;
-    sessionStorage.setItem("farside-nav-dir", dir);
+    var target = ROUTES[index].href;
+    try {
+      sessionStorage.setItem("farside-nav-dir", dir);
+    } catch (e) {}
+    // prefer quick navigate if reduced motion
+    if (document.documentElement.classList.contains("reduce-motion")) {
+      location.href = target;
+      return;
+    }
     document.body.classList.remove(
       "slide-in-from-left",
       "slide-in-from-right",
@@ -135,25 +128,38 @@
     document.body.classList.add(
       dir === "right" ? "slide-out-to-left" : "slide-out-to-right",
     );
-
-    const rail = document.querySelector(".top-rail");
+    var rail = document.querySelector(".top-rail");
     if (rail) {
       rail.querySelectorAll("a").forEach(function (a, idx) {
         a.classList.toggle("is-on", idx === index);
       });
       movePill();
     }
-
     setTimeout(function () {
       location.href = target;
-    }, 300);
+    }, 260);
   }
 
-  // enter anim
-  var dirIn = sessionStorage.getItem("farside-nav-dir");
-  if (dirIn === "right") document.body.classList.add("slide-in-from-right");
-  else if (dirIn === "left") document.body.classList.add("slide-in-from-left");
-  sessionStorage.removeItem("farside-nav-dir");
+  // enter anim — only if we actually navigated with direction
+  try {
+    var dirIn = sessionStorage.getItem("farside-nav-dir");
+    if (dirIn === "right") document.body.classList.add("slide-in-from-right");
+    else if (dirIn === "left") document.body.classList.add("slide-in-from-left");
+    sessionStorage.removeItem("farside-nav-dir");
+  } catch (e) {}
+
+  // always force content visible after a short time (safety)
+  setTimeout(function () {
+    document.body.classList.remove(
+      "slide-out-to-left",
+      "slide-out-to-right",
+    );
+    var slides = document.querySelectorAll(".page-slide");
+    for (var i = 0; i < slides.length; i++) {
+      slides[i].style.opacity = "1";
+      slides[i].style.transform = "none";
+    }
+  }, 600);
 
   ensureUI();
   markActive();
@@ -164,30 +170,29 @@
   });
   if (window.__farsideDict) window.FarsideNav.relabel(window.__farsideDict);
 
+  var leftBtn = document.querySelector(".side-arrow-left");
+  var rightBtn = document.querySelector(".side-arrow-right");
+  if (leftBtn) {
+    leftBtn.addEventListener("click", function () {
+      var i = indexOf();
+      if (i < 0) i = 0;
+      goTo(i <= 0 ? ROUTES.length - 1 : i - 1, "left");
+    });
+  }
+  if (rightBtn) {
+    rightBtn.addEventListener("click", function () {
+      var i = indexOf();
+      if (i < 0) i = 0;
+      goTo(i >= ROUTES.length - 1 ? 0 : i + 1, "right");
+    });
+  }
 
-  // arrows
-  document.querySelector(".side-arrow-left")?.addEventListener("click", function () {
-    var i = indexOf();
-    if (i <= 0) goTo(ROUTES.length - 1, "left");
-    else goTo(i - 1, "left");
-  });
-  document.querySelector(".side-arrow-right")?.addEventListener("click", function () {
-    var i = indexOf();
-    if (i >= ROUTES.length - 1) goTo(0, "right");
-    else goTo(i + 1, "right");
-  });
-
-  // keyboard
   document.addEventListener("keydown", function (e) {
     if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
-    if (e.key === "ArrowLeft") {
-      document.querySelector(".side-arrow-left")?.click();
-    } else if (e.key === "ArrowRight") {
-      document.querySelector(".side-arrow-right")?.click();
-    }
+    if (e.key === "ArrowLeft" && leftBtn) leftBtn.click();
+    if (e.key === "ArrowRight" && rightBtn) rightBtn.click();
   });
 
-  // top rail + any internal html links
   document.addEventListener(
     "click",
     function (e) {
@@ -195,17 +200,13 @@
       if (!a) return;
       var href = a.getAttribute("href") || "";
       if (!href || href.indexOf("http") === 0 || href.charAt(0) === "#") return;
+      if (href.indexOf("profile-v") !== -1) return; // allow variant pages normal nav
       var name = href.split("/").pop().split("?")[0] || "index.html";
-      var to = -1;
-      for (var i = 0; i < ROUTES.length; i++) {
-        if (ROUTES[i].href === name) {
-          to = i;
-          break;
-        }
-      }
+      var to = indexOf(name);
       if (to < 0) return;
       e.preventDefault();
       var from = indexOf();
+      if (from < 0) from = 0;
       goTo(to, to >= from ? "right" : "left");
     },
     true,

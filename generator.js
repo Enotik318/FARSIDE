@@ -41,6 +41,25 @@ const plGrid = document.getElementById("playlist-grid");
 const plEmpty = document.getElementById("pl-empty");
 const plLabel = document.getElementById("pl-genre-label");
 const trList = document.getElementById("track-list");
+  const PROFILE_KEY = "farside-profile-v1";
+
+  function addFavoriteGenre(name) {
+    const g = String(name || "").trim();
+    if (!g) return;
+    try {
+      const p = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}") || {};
+      let favs = Array.isArray(p.favorites) ? p.favorites.slice() : [];
+      const low = g.toLowerCase();
+      favs = [g].concat(favs.filter((x) => String(x).toLowerCase() !== low)).slice(0, 8);
+      p.favorites = favs;
+      p.updatedAt = Date.now();
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
 const trEmpty = document.getElementById("tr-empty");
 const trLabel = document.getElementById("tr-genre-label");
 
@@ -529,7 +548,11 @@ function renderTracks(data, genre) {
   tracks = tracks.filter(Boolean);
 
   if (!tracks.length) {
-    if (trEmpty) trEmpty.hidden = false;
+    if (trEmpty) {
+      trEmpty.hidden = false;
+      trEmpty.textContent =
+        "Треки не нашлись по этому микро-жанру. Попробуй ещё раз или открой плейлисты.";
+    }
     return;
   }
   if (trEmpty) trEmpty.hidden = true;
@@ -720,16 +743,49 @@ document.addEventListener("keydown", (e) => {
     const saved = localStorage.getItem(FILTER_KEY);
     if (saved) setFilter(saved);
   } catch (_) {}
-  const q = new URLSearchParams(location.search).get("genre");
+  let q = new URLSearchParams(location.search).get("genre");
+  if (!q) {
+    try { q = sessionStorage.getItem("farside-open-genre") || ""; sessionStorage.removeItem("farside-open-genre"); } catch (_) {}
+  }
   if (q) {
     lastGenre = q;
     renderResult(q);
-    const cached = cacheRead(q.toLowerCase());
-    if (cached) {
-      renderPlaylists(cached.playlists || [], q, false);
-      renderTracks(cached, q);
-    }
     await logLine("deep link: " + q);
+    try {
+      const data = await fetchApi(q);
+      if (data) {
+        renderPlaylists(data.playlists || [], q, false);
+        renderTracks(data, q);
+        try {
+          pushHistory(q);
+        } catch (_) {}
+      }
+    } catch (e) {
+      await logLine("deep link api fail");
+      console.warn(e);
+    }
   }
   await logLines(["standby", "ready"]);
 })();
+
+  // favorite current genre
+  document.getElementById("gx-fav-btn")?.addEventListener("click", () => {
+    const name =
+      (document.getElementById("genre-out") && document.getElementById("genre-out").textContent.trim()) ||
+      "";
+    if (!name || name === "—" || name === "…") {
+      alert("Сначала поймай жанр");
+      return;
+    }
+    if (addFavoriteGenre(name)) {
+      const b = document.getElementById("gx-fav-btn");
+      if (b) {
+        b.textContent = "В любимых";
+        b.disabled = true;
+        setTimeout(() => {
+          b.textContent = "♥ Любимое";
+          b.disabled = false;
+        }, 1200);
+      }
+    }
+  });

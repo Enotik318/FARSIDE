@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ритуал — FARSIDE</title>
+  <meta name="description" content="Жанр дня по вайбу и тирлист микро-жанров." />
+  <meta name="theme-color" content="#0a0a0a" />
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>
+    (function () {
+      var t = localStorage.getItem("farside-theme") || "dark";
+      document.documentElement.setAttribute("data-theme", t);
+    })();
+  </script>
+</head>
+<body>
+  <div class="video-backdrop" aria-hidden="true">
+    <video id="bg-video" autoplay muted loop playsinline>
+      <source src="media/mainfon.mp4" type="video/mp4" />
+    </video>
+    <div class="video-vignette"></div>
+    <div class="video-scrim"></div>
+  </div>
+
+  <main class="stage daily-stage" id="content">
+    <header class="pf-hero">
+      <p class="kicker">DAILY SIGNAL</p>
+      <h1 class="headline">Ритуал</h1>
+      <p class="set-hint">Раз в день — вайб, один жанр, место в тирлисте. Собирай свой атлас вкуса.</p>
+      <div class="set-status-row">
+        <div class="set-chip" id="dy-chip-date">—</div>
+        <div class="set-chip" id="dy-chip-streak">Серия · 0</div>
+        <div class="set-chip" id="dy-chip-tier">В тире · 0</div>
+      </div>
+    </header>
+
+    <div class="dy-grid">
+      <!-- left: today's draw -->
+      <section class="set-card dy-card">
+        <div class="set-card-head">
+          <span class="set-idx">01</span>
+          <div>
+            <h2>Вайб дня</h2>
+            <p>Выбери настроение — получим один жанр.</p>
+          </div>
+        </div>
+        <div class="dy-vibes" id="dy-vibes" role="group" aria-label="Вайбы"></div>
+        <div class="set-actions" style="margin-top:.85rem">
+          <button type="button" class="btn btn-primary" id="dy-draw">Получить жанр</button>
+          <button type="button" class="btn btn-ghost" id="dy-redraw" hidden>Другой (1×)</button>
+        </div>
+        <div class="dy-timer" id="dy-timer">—</div>
+        <p class="set-hint" id="dy-draw-hint">Можно сменить жанр один раз за день.</p>
+      </section>
+
+      <section class="set-card dy-card dy-result-card" id="dy-result" hidden>
+        <div class="set-card-head">
+          <span class="set-idx">02</span>
+          <div>
+            <h2>Жанр дня</h2>
+            <p id="dy-result-meta">—</p>
+          </div>
+        </div>
+        <h3 class="dy-genre-name" id="dy-genre-name">—</h3>
+        <p class="dy-genre-blurb" id="dy-genre-blurb"></p>
+        <div class="dy-tier-pick" id="dy-tier-pick">
+          <span class="set-hint">Куда ставим?</span>
+          <div class="dy-tier-btns">
+            <button type="button" data-tier="S" class="dy-tier-btn tier-s">S</button>
+            <button type="button" data-tier="A" class="dy-tier-btn tier-a">A</button>
+            <button type="button" data-tier="B" class="dy-tier-btn tier-b">B</button>
+            <button type="button" data-tier="C" class="dy-tier-btn tier-c">C</button>
+            <button type="button" data-tier="Z" class="dy-tier-btn tier-z">Не моё</button>
+          </div>
+        </div>
+        <div class="set-actions" style="margin-top:.85rem">
+          <a class="btn btn-primary" id="dy-to-gen" href="generator.html">В генератор</a>
+          <button type="button" class="btn btn-ghost" id="dy-to-fav">♥ В любимые</button>
+        </div>
+      </section>
+
+      <!-- right: tierlist -->
+      <section class="set-card dy-card dy-tier-board set-card-wide">
+        <div class="set-card-head">
+          <span class="set-idx">TIER</span>
+          <div>
+            <h2>Тирлист</h2>
+            <p>Кликни жанр, чтобы сменить ряд. Долго — убрать.</p>
+          </div>
+        </div>
+        <div class="dy-tiers" id="dy-tiers"></div>
+        <div class="set-actions" style="margin-top:.75rem">
+          <button type="button" class="btn btn-ghost" id="dy-export">Копировать тир</button>
+          <button type="button" class="btn btn-ghost" id="dy-clear">Очистить тир</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script src="nav-top.js"></script>
+  <script src="mars.js"></script>
+  <script src="auth.js"></script>
+  <script src="daily.js"></script>
+</body>
+</html>
