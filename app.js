@@ -1,3 +1,10 @@
+/* no-light-theme */
+try {
+  if (localStorage.getItem("farside-theme") === "light") {
+    localStorage.setItem("farside-theme", "dark");
+  }
+  document.documentElement.setAttribute("data-theme", localStorage.getItem("farside-theme") || "dark");
+} catch (e) {}
 (() => {
   const THEME_KEY = "farside-theme";
   const STYLE_KEY = "farside-style";
@@ -8,7 +15,7 @@
       "nav.menu": "Меню",
       "nav.section": "Навигация",
       "nav.home": "Главная",
-      "nav.generator": "Генератор",
+      "nav.generator": "Генератор", "nav.daily": "Ритуал",
       "nav.tree": "Дерево",
       "nav.manifesto": "Манифест",
       "nav.settings": "Настройки",
@@ -96,7 +103,7 @@
       "nav.menu": "Menu",
       "nav.section": "Navigate",
       "nav.home": "Home",
-      "nav.generator": "Generator",
+      "nav.generator": "Generator", "nav.daily": "Ritual",
       "nav.tree": "Tree",
       "nav.manifesto": "Manifesto",
       "nav.profile": "Settings",
@@ -212,12 +219,12 @@
   function getLang() {
     return localStorage.getItem(LANG_KEY) || "ru";
   }
-  function applyLang(lang) {
+  window.applyLang = function applyLang(lang) {
     const base = I18N[lang] || I18N.en || I18N.ru;
     const EXTRA = {
       uk: {
-        "nav.home": "Головна", "nav.generator": "Генератор", "nav.tree": "Дерево",
-        "nav.profile": "Профіль", "nav.settings": "Налаштування", "nav.about": "Маніфест",
+        "nav.home": "Головна", "nav.generator": "Генератор", "nav.daily": "Ритуал", "nav.tree": "Дерево",
+        "nav.profile": "Профіль", "nav.settings": "Налаштування", "nav.about": "Маніфест", "nav.daily": "Ритуал",
         "nav.manifesto": "Маніфест",
         "set.title": "Налаштування", "set.theme": "Тема", "set.lang": "Мова",
         "set.appearance": "Вигляд", "set.system": "Система", "set.planets": "Лабораторія планет",
@@ -226,8 +233,8 @@
         "set.on": "Увімк", "set.off": "Вимк", "set.save": "Зберегти", "set.reset": "Скинути",
       },
       de: {
-        "nav.home": "Start", "nav.generator": "Generator", "nav.tree": "Baum",
-        "nav.profile": "Profil", "nav.settings": "Einstellungen", "nav.about": "Manifest",
+        "nav.home": "Start", "nav.generator": "Generator", "nav.daily": "Ritual", "nav.tree": "Baum",
+        "nav.profile": "Profil", "nav.settings": "Einstellungen", "nav.about": "Manifest", "nav.daily": "Ritual",
         "nav.manifesto": "Manifest",
         "set.title": "Einstellungen", "set.theme": "Design", "set.lang": "Sprache",
         "set.appearance": "Erscheinung", "set.system": "System", "set.planets": "Planeten-Labor",
@@ -237,7 +244,7 @@
       },
       es: {
         "nav.home": "Inicio", "nav.generator": "Generador", "nav.tree": "Árbol",
-        "nav.profile": "Perfil", "nav.settings": "Ajustes", "nav.about": "Manifiesto",
+        "nav.profile": "Perfil", "nav.settings": "Ajustes", "nav.about": "Manifiesto", "nav.daily": "Ritual",
         "nav.manifesto": "Manifiesto",
         "set.title": "Ajustes", "set.theme": "Tema", "set.lang": "Idioma",
         "set.appearance": "Apariencia", "set.system": "Sistema", "set.planets": "Lab de planetas",

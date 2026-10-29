@@ -64,7 +64,16 @@
       el.textContent = "Можно получить жанр";
       el.classList.remove("is-wait");
       if (hint) hint.textContent = "Можно сменить жанр один раз за день.";
-      if (drawBtn) drawBtn.disabled = false;
+      if (drawBtn) {
+        drawBtn.disabled = false;
+        drawBtn.classList.remove("is-done");
+        drawBtn.textContent = "Получить жанр";
+      }
+      if (redrawBtn) {
+        redrawBtn.hidden = true;
+        redrawBtn.disabled = false;
+        redrawBtn.textContent = "Другой ×1";
+      }
       return;
     }
     var left = msUntilNextLocalMidnight();
@@ -75,9 +84,16 @@
         ? "Смена уже использована. Новый жанр — после полуночи."
         : "Можно сменить жанр один раз за день.";
     }
-    // draw still allowed if want to re-show; primary lock is redraw
-    if (drawBtn) drawBtn.disabled = false;
-    if (redrawBtn) redrawBtn.hidden = !!dayState.redrawUsed;
+    if (drawBtn) {
+      drawBtn.disabled = true;
+      drawBtn.classList.add("is-done");
+      drawBtn.textContent = "Жанр на сегодня получен";
+    }
+    if (redrawBtn) {
+      redrawBtn.hidden = false;
+      redrawBtn.disabled = !!dayState.redrawUsed;
+      redrawBtn.textContent = dayState.redrawUsed ? "Другой ×0" : "Другой ×1";
+    }
   }
 
 
@@ -269,7 +285,11 @@
     });
 
     var redrawBtn = document.getElementById("dy-redraw");
-    if (redrawBtn) redrawBtn.hidden = !!state.redrawUsed;
+    if (redrawBtn) {
+      redrawBtn.hidden = false;
+      redrawBtn.disabled = !!state.redrawUsed;
+      redrawBtn.textContent = state.redrawUsed ? "Другой ×0" : "Другой ×1";
+    }
   }
 
   function draw(redraw) {
@@ -350,11 +370,13 @@
   }
 
   function addFavorite(name) {
+    var g = String(name || "").trim();
+    if (!g || g.length < 2) return false;
     try {
       var p = loadJSON(PROFILE_KEY, {});
       var favs = Array.isArray(p.favorites) ? p.favorites.slice() : [];
-      var low = String(name).toLowerCase();
-      favs = [name].concat(
+      var low = g.toLowerCase();
+      favs = [g].concat(
         favs.filter(function (x) {
           return String(x).toLowerCase() !== low;
         }),
@@ -362,6 +384,13 @@
       p.favorites = favs;
       p.updatedAt = Date.now();
       saveJSON(PROFILE_KEY, p);
+      try {
+        var sess = loadJSON("farside-session-v1", {});
+        if (sess && typeof sess === "object") {
+          sess.favorites = favs;
+          saveJSON("farside-session-v1", sess);
+        }
+      } catch (e2) {}
       return true;
     } catch (e) {
       return false;
@@ -441,11 +470,13 @@
       if (addFavorite(dayState.genre)) {
         var b = document.getElementById("dy-to-fav");
         if (b) {
-          b.textContent = "В любимых";
+          b.textContent = "✓ В любимых";
           setTimeout(function () {
             b.textContent = "♥ В любимые";
-          }, 1200);
+          }, 1500);
         }
+      } else {
+        alert("Не удалось сохранить в любимые");
       }
     });
 
@@ -485,7 +516,11 @@
     if (dayState && dayState.date === today()) {
       showResult(dayState);
       var redrawBtn = document.getElementById("dy-redraw");
-      if (redrawBtn) redrawBtn.hidden = !!dayState.redrawUsed;
+      if (redrawBtn) {
+        redrawBtn.hidden = false;
+        redrawBtn.disabled = !!dayState.redrawUsed;
+        redrawBtn.textContent = dayState.redrawUsed ? "Другой ×0" : "Другой ×1";
+      }
     }
     updateTimerUI();
     setInterval(updateTimerUI, 1000);

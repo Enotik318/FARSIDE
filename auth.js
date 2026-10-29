@@ -246,6 +246,7 @@
     window.dispatchEvent(
       new CustomEvent("farside-auth", { detail: data.user || null }),
     );
+    syncAuthChrome(data.user || null);
     const p = location.pathname || "";
     if (/profile/i.test(p)) location.reload();
   }
@@ -302,6 +303,49 @@
     err.status = 401;
     throw err;
   }
+
+  function syncAuthChrome(user) {
+    var on = !!(user && user.nick);
+    document.querySelectorAll("[data-open-auth], #pf-btn-reg, #pf-btn-login").forEach(function (el) {
+      if (on) {
+        el.setAttribute("hidden", "");
+        el.style.display = "none";
+      } else {
+        el.removeAttribute("hidden");
+        el.style.display = "";
+      }
+    });
+    document.querySelectorAll("[data-auth-logout], #pf-logout").forEach(function (el) {
+      if (on) {
+        el.removeAttribute("hidden");
+        el.style.display = "";
+      } else {
+        el.setAttribute("hidden", "");
+        el.style.display = "none";
+      }
+    });
+  }
+
+  window.addEventListener("farside-auth", function (e) {
+    syncAuthChrome(e.detail);
+  });
+
+  // boot hide/show
+  setTimeout(function () {
+    try {
+      const u = readSession();
+      if (u && u.nick) syncAuthChrome(u);
+    } catch (_) {}
+    // confirm with API / offline session
+    if (token()) {
+      me().then(function (r) {
+        syncAuthChrome(r && r.user);
+      }).catch(function () {
+        var u = readSession();
+        syncAuthChrome(u && u.nick ? u : null);
+      });
+    }
+  }, 50);
 
   window.FarsideAuth = {
     open: openAuth,

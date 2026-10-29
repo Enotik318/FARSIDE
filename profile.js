@@ -226,8 +226,8 @@
     if (chip) chip.textContent = "Гость";
     var reg = document.getElementById("pf-btn-reg");
     var log = document.getElementById("pf-btn-login");
-    if (reg) reg.removeAttribute("hidden");
-    if (log) log.removeAttribute("hidden");
+    if (reg) { reg.removeAttribute("hidden"); reg.style.display = ""; }
+    if (log) { log.removeAttribute("hidden"); log.style.display = ""; }
   }
 
   function showApp(user) {
@@ -239,8 +239,8 @@
     if (chip) chip.textContent = "@" + (user.nick || "user");
     var reg = document.getElementById("pf-btn-reg");
     var log = document.getElementById("pf-btn-login");
-    if (reg) reg.setAttribute("hidden", "");
-    if (log) log.setAttribute("hidden", "");
+    if (reg) { reg.setAttribute("hidden", ""); reg.style.display = "none"; }
+    if (log) { log.setAttribute("hidden", ""); log.style.display = "none"; }
 
     var local = loadLocal();
     var serverAv = user.avatar != null ? String(user.avatar) : "";
@@ -251,15 +251,18 @@
     } else if (!serverAv && localAv) {
       avatar = localAv;
     }
+    // prefer local favorites (generator/ritual write here)
+    var local2 = loadLocal();
+    var favs = Array.isArray(local2.favorites) && local2.favorites.length
+      ? local2.favorites
+      : (Array.isArray(user.favorites) ? user.favorites : []);
+    console.log("[farside] profile favs", favs);
     applyForm({
       name: user.displayName || user.nick || local.name || "",
       bio: user.bio != null && user.bio !== "" ? user.bio : local.bio || "",
       spotify: user.spotify || local.spotify || "",
       avatar: avatar,
-      favorites:
-        (Array.isArray(user.favorites) && user.favorites.length
-          ? user.favorites
-          : local.favorites) || [],
+      favorites: favs,
     });
   }
 

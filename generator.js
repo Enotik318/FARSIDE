@@ -2,7 +2,7 @@ const FARSIDE_API_BASE = (window.FARSIDE_API || localStorage.getItem("farside-ap
 
 const API_URL = FARSIDE_API_BASE + "/api/random";
 const API_HEALTH = FARSIDE_API_BASE + "/api/health";
-const CACHE_KEY = "farside-api-cache-v2";
+const CACHE_KEY = "farside-api-cache-v3";
 const CACHE_TTL = 8 * 60 * 1000;
 const FILTER_KEY = "farside-filter";
 const HISTORY_KEY = "farside-genre-history";
@@ -41,31 +41,42 @@ const plGrid = document.getElementById("playlist-grid");
 const plEmpty = document.getElementById("pl-empty");
 const plLabel = document.getElementById("pl-genre-label");
 const trList = document.getElementById("track-list");
-  const PROFILE_KEY = "farside-profile-v1";
-
-  function addFavoriteGenre(name) {
-    const g = String(name || "").trim();
-    if (!g) return;
-    try {
-      const p = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}") || {};
-      let favs = Array.isArray(p.favorites) ? p.favorites.slice() : [];
-      const low = g.toLowerCase();
-      favs = [g].concat(favs.filter((x) => String(x).toLowerCase() !== low)).slice(0, 8);
-      p.favorites = favs;
-      p.updatedAt = Date.now();
-      localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
 const trEmpty = document.getElementById("tr-empty");
 const trLabel = document.getElementById("tr-genre-label");
+const PROFILE_KEY = "farside-profile-v1";
+
+window.addFavoriteGenre = function addFavoriteGenre(name) {
+  var g = String(name || "").trim();
+  if (!g) g = String(window.__farsideLastGenre || lastGenre || "").trim();
+  if (!g || g.length < 2) return false;
+  if (/^(—|–|-|…|ожидание|нажми)/i.test(g)) return false;
+  try {
+    var p = {};
+    try { p = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}") || {}; } catch (e1) { p = {}; }
+    var favs = Array.isArray(p.favorites) ? p.favorites.slice() : [];
+    var low = g.toLowerCase();
+    favs = [g].concat(favs.filter(function (x) { return String(x).toLowerCase() !== low; })).slice(0, 8);
+    p.favorites = favs;
+    p.updatedAt = Date.now();
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+    try {
+      var sess = JSON.parse(localStorage.getItem("farside-session-v1") || "null") || {};
+      if (sess && typeof sess === "object") {
+        sess.favorites = favs;
+        localStorage.setItem("farside-session-v1", JSON.stringify(sess));
+      }
+    } catch (e2) {}
+    console.log("[farside] favorites saved", favs);
+    return true;
+  } catch (e) {
+    console.warn("fav", e);
+    return false;
+  }
+};
 
 let allGenres = null;
 let genresMeta = null;
-let activeFilter = "all";
+let activeFilters = new Set(["all"]);
 let lastGenre = null;
 let busy = false;
 const t0 = Date.now();
@@ -83,31 +94,17 @@ function elapsed() {
 }
 
 function logLine(text) {
-  logQueue = logQueue.then(
-    () =>
-      new Promise((resolve) => {
-        setTimeout(() => {
-          if (!signalLines) return resolve();
-          const li = document.createElement("li");
-          li.className = "gx-log-in";
-          li.innerHTML =
-            '<span class="gx-log-t">' + elapsed() + "</span> " + text;
-          signalLines.appendChild(li);
-          while (signalLines.children.length > 24) {
-            signalLines.removeChild(signalLines.firstChild);
-          }
-          const box = signalLines.parentElement;
-          if (box) box.scrollTop = box.scrollHeight;
-          requestAnimationFrame(() => li.classList.add("is-on"));
-          resolve();
-        }, LOG_GAP);
-      }),
-  );
-  return logQueue;
-}
-
-async function logLines(arr) {
-  for (const t of arr) await logLine(t);
+  if (!signalLines) return Promise.resolve();
+  const li = document.createElement("li");
+  li.className = "gx-log-in is-on";
+  li.innerHTML = '<span class="gx-log-t">' + elapsed() + "</span> " + text;
+  signalLines.appendChild(li);
+  while (signalLines.children.length > 20) {
+    signalLines.removeChild(signalLines.firstChild);
+  }
+  const box = signalLines.parentElement;
+  if (box) box.scrollTop = box.scrollHeight;
+  return Promise.resolve();
 }
 
 function setApiStatus(state, text) {
@@ -188,10 +185,7 @@ async function loadGenres() {
     return (
       t.startsWith("<!doctype") ||
       t.startsWith("<html") ||
-      t.startsWith("<head") ||
-      t.startsWith("<body") ||
-      t.includes("</html>") ||
-      t.startsWith("<!--")
+      t.includes("</html>")
     );
   }
 
@@ -201,39 +195,41 @@ async function loadGenres() {
       .filter(Boolean)
       .filter((s) => !looksLikeHtml(s))
       .filter((s) => !s.startsWith("<") && !s.startsWith("{"))
-      .filter((s) => s.length < 80);
+      .filter((s) => s.length > 1 && s.length < 80);
   }
 
-  // 1) genres.json — reliable
+  // 1) быстрый txt
   try {
-    const res = await fetch("genres.json");
+    const res = await fetch("genres.txt");
     if (res.ok) {
-      const data = await res.json();
-      if (data && typeof data === "object") {
-        genresMeta = data;
-        allGenres = cleanList(
-          Array.isArray(data) ? data : Object.values(data).map((v) => v.name || v),
-        );
-        // also keys if values have no name
-        if (!allGenres.length) allGenres = cleanList(Object.keys(data));
+      const text = await res.text();
+      const list = cleanList(text.split(/[\n,]+/));
+      if (list.length > 50) {
+        allGenres = list;
+        return allGenres;
       }
     }
   } catch (_) {}
 
-  // 2) genres.txt fallback
-  if (!allGenres || !allGenres.length) {
-    try {
-      const res = await fetch("genres.txt");
-      const text = await res.text();
-      if (!looksLikeHtml(text)) {
-        allGenres = cleanList(text.split("\n"));
+  // 2) json fallback
+  try {
+    const res = await fetch("genres.json");
+    if (res.ok) {
+      const data = await res.json();
+      const list = cleanList(
+        Array.isArray(data)
+          ? data.map((x) => (x && x.name) || x)
+          : Object.keys(data),
+      );
+      if (list.length) {
+        allGenres = list;
+        genresMeta = data && !Array.isArray(data) ? data : genresMeta;
+        return allGenres;
       }
-    } catch (_) {}
-  }
+    }
+  } catch (_) {}
 
-  if (!allGenres || !allGenres.length) {
-    allGenres = ["indie", "techno", "lo-fi", "synthwave", "jazz", "ambient"];
-  }
+  allGenres = ["lo-fi", "ambient", "uk garage", "shoegaze", "synthwave", "city pop"];
   return allGenres;
 }
 
@@ -248,12 +244,18 @@ async function loadMeta() {
   return genresMeta;
 }
 
-function filterPool(list, key) {
-  const words = FILTERS[key];
-  if (!words) return list;
+function filterPool(list, keys) {
+  const set = keys instanceof Set ? keys : new Set([keys || "all"]);
+  if (set.has("all") || set.size === 0) return list;
+  const wordLists = [];
+  set.forEach((k) => {
+    if (FILTERS[k] && FILTERS[k].length) wordLists.push(FILTERS[k]);
+  });
+  if (!wordLists.length) return list;
   return list.filter((g) => {
     const low = g.toLowerCase();
-    return words.some((w) => low.includes(w));
+    // OR across selected filters
+    return wordLists.some((words) => words.some((w) => low.includes(w)));
   });
 }
 
@@ -313,18 +315,33 @@ function showPanel(id) {
   });
 }
 
-function setFilter(key) {
-  activeFilter = key || "all";
+function setFilter(key, multi) {
+  key = key || "all";
+  if (key === "all") {
+    activeFilters = new Set(["all"]);
+  } else {
+    activeFilters.delete("all");
+    if (activeFilters.has(key)) activeFilters.delete(key);
+    else activeFilters.add(key);
+    if (activeFilters.size === 0) activeFilters = new Set(["all"]);
+  }
   document.querySelectorAll(".gx-filter, .gx-chip, [data-filter]").forEach((el) => {
     const f = el.getAttribute("data-filter");
     if (f == null) return;
-    el.classList.toggle("is-active", f === activeFilter);
-    el.classList.toggle("is-on", f === activeFilter);
+    const on = activeFilters.has(f);
+    el.classList.toggle("is-active", on);
+    el.classList.toggle("is-on", on);
   });
   try {
-    localStorage.setItem(FILTER_KEY, activeFilter);
+    localStorage.setItem(FILTER_KEY, JSON.stringify([...activeFilters]));
   } catch (_) {}
-  logLine("filter · " + activeFilter);
+  logLine("filter · " + [...activeFilters].join("+"));
+  const gf = document.getElementById("genre-filter");
+  if (gf) {
+    gf.textContent =
+      "фильтр · " +
+      (activeFilters.has("all") ? "все" : [...activeFilters].join(", "));
+  }
 }
 
 function esc(s) {
@@ -450,7 +467,7 @@ function renderResult(genre) {
   }
   if (genreFilter) {
     genreFilter.textContent =
-      "фильтр · " + (activeFilter === "all" ? "все" : activeFilter);
+      "фильтр · " + (activeFilters === "all" ? "все" : activeFilters);
   }
 }
 
@@ -536,9 +553,12 @@ function fmtDur(ms) {
 }
 
 function renderTracks(data, genre) {
-  if (trLabel) trLabel.textContent = genre || "—";
-  if (!trList) return;
-  trList.innerHTML = "";
+  const list = document.getElementById("track-list") || trList;
+  const empty = document.getElementById("tr-empty") || trEmpty;
+  const label = document.getElementById("tr-genre-label") || trLabel;
+  if (label) label.textContent = genre || "—";
+  if (!list) return;
+  list.innerHTML = "";
   let tracks = [];
   if (data) {
     if (Array.isArray(data.tracks)) tracks = data.tracks;
@@ -548,14 +568,14 @@ function renderTracks(data, genre) {
   tracks = tracks.filter(Boolean);
 
   if (!tracks.length) {
-    if (trEmpty) {
-      trEmpty.hidden = false;
-      trEmpty.textContent =
+    if (empty) {
+      empty.hidden = false;
+      empty.textContent =
         "Треки не нашлись по этому микро-жанру. Попробуй ещё раз или открой плейлисты.";
     }
     return;
   }
-  if (trEmpty) trEmpty.hidden = true;
+  if (empty) empty.hidden = true;
 
   tracks.slice(0, 12).forEach((tr, i) => {
     const url =
@@ -588,7 +608,7 @@ function renderTracks(data, genre) {
       '</span></div><span class="gx-track-dur">' +
       fmtDur(tr.duration_ms) +
       "</span>";
-    trList.appendChild(row);
+    list.appendChild(row);
   });
 }
 
@@ -633,37 +653,35 @@ async function generate() {
   if (busy || !btn) return;
   busy = true;
   btn.classList.add("is-busy");
-  await logLines(["ignition", "scan band…"]);
+  logLine("запуск");
 
   try {
     const genres = await loadGenres();
-    await loadMeta();
-    await logLine("table " + genres.length);
+    if (!genresMeta) loadMeta().catch(function () {});
     const pool =
-      activeFilter === "all" ? genres : filterPool(genres, activeFilter);
+      activeFilters.has("all") ? genres : filterPool(genres, activeFilters);
     const src = pool.length ? pool : genres;
     if (!src.length) {
-      await logLine("ERR empty");
+      logLine("пусто");
       if (genreOut) genreOut.textContent = "пусто";
       return;
     }
     const localGenre = src[Math.floor(Math.random() * src.length)];
-    await logLine("probe " + localGenre);
-
     const data = await fetchApi(localGenre);
     const genre = (data && data.genre) || localGenre;
     lastGenre = genre;
-
-    await logLine("LOCK: " + genre);
+    window.__farsideLastGenre = genre;
+    logLine("→ " + genre);
     renderResult(genre);
-    renderPlaylists((data && data.playlists) || [], genre, !data);
-    renderTracks(data, genre);
-    await logLine("tracks · " + ((data && data.tracks) || []).filter(Boolean).length);
+    const pls = (data && data.playlists) || [];
+    const trs = (data && data.tracks) || [];
+    renderPlaylists(pls, genre, !data);
+    renderTracks(data || { tracks: trs }, genre);
+    logLine("плейлисты " + pls.filter(Boolean).length + " · треки " + trs.filter(Boolean).length);
     pushHistory(genre);
-    await logLine("done");
   } catch (err) {
     console.error(err);
-    await logLine("ERR");
+    logLine("ошибка");
   } finally {
     busy = false;
     btn.classList.remove("is-busy");
@@ -741,7 +759,26 @@ document.addEventListener("keydown", (e) => {
   fillEther(genres);
   try {
     const saved = localStorage.getItem(FILTER_KEY);
-    if (saved) setFilter(saved);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length) {
+          activeFilters = new Set(parsed);
+          document.querySelectorAll(".gx-filter, [data-filter]").forEach((el) => {
+            const f = el.getAttribute("data-filter");
+            if (f == null) return;
+            el.classList.toggle("is-active", activeFilters.has(f));
+          });
+        } else if (typeof saved === "string" && saved && saved[0] !== "[") {
+          activeFilters = new Set([saved]);
+          document.querySelectorAll(".gx-filter, [data-filter]").forEach((el) => {
+            const f = el.getAttribute("data-filter");
+            if (f == null) return;
+            el.classList.toggle("is-active", activeFilters.has(f));
+          });
+        }
+      } catch (_) {}
+    }
   } catch (_) {}
   let q = new URLSearchParams(location.search).get("genre");
   if (!q) {
@@ -755,7 +792,7 @@ document.addEventListener("keydown", (e) => {
       const data = await fetchApi(q);
       if (data) {
         renderPlaylists(data.playlists || [], q, false);
-        renderTracks(data, q);
+        if (typeof renderTracks === "function") renderTracks(data, q);
         try {
           pushHistory(q);
         } catch (_) {}
@@ -765,27 +802,36 @@ document.addEventListener("keydown", (e) => {
       console.warn(e);
     }
   }
-  await logLines(["standby", "ready"]);
+  await logLines(["готов", "можно генерировать"]);
 })();
 
   // favorite current genre
-  document.getElementById("gx-fav-btn")?.addEventListener("click", () => {
-    const name =
-      (document.getElementById("genre-out") && document.getElementById("genre-out").textContent.trim()) ||
-      "";
-    if (!name || name === "—" || name === "…") {
-      alert("Сначала поймай жанр");
-      return;
-    }
-    if (addFavoriteGenre(name)) {
-      const b = document.getElementById("gx-fav-btn");
-      if (b) {
-        b.textContent = "В любимых";
-        b.disabled = true;
-        setTimeout(() => {
-          b.textContent = "♥ Любимое";
-          b.disabled = false;
-        }, 1200);
-      }
-    }
-  });
+
+
+window.farsideFavClick = function farsideFavClick() {
+  var name = window.__farsideLastGenre || lastGenre || "";
+  if (!name) {
+    var el = document.getElementById("genre-out");
+    name = el ? el.textContent.trim() : "";
+  }
+  if (!name || /^(—|–|-|…|ожидание|нажми)/i.test(name)) {
+    alert("Сначала нажми «Генератор»");
+    return false;
+  }
+  var ok = window.addFavoriteGenre(name);
+  var btn = document.getElementById("gx-fav-btn");
+  if (ok && btn) {
+    btn.textContent = "✓ В любимых";
+    setTimeout(function () { btn.textContent = "♥ Любимое"; }, 1600);
+  } else if (!ok) {
+    alert("Не сохранилось в любимые");
+  }
+  return ok;
+};
+
+document.addEventListener("click", function (e) {
+  if (e.target.closest("#gx-fav-btn")) {
+    e.preventDefault();
+    window.farsideFavClick();
+  }
+});

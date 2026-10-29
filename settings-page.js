@@ -1,3 +1,5 @@
+/* force dark */
+try { localStorage.setItem("farside-theme","dark"); document.documentElement.setAttribute("data-theme","dark"); } catch(e){}
 
 (function () {
   const PLANET_NAMES = {
